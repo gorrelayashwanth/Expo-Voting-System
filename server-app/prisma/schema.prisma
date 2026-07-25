@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VoterType {
+  guest
+  faculty
+  student
+}
+
+enum ServerStatus {
+  healthy
+  warning
+  down
+}
+
+model Projects {
+  id             String   @id @default(uuid()) @db.Uuid
+  project_number Int
+  title          String
+  team_name      String?
+  created_at     DateTime @default(now())
+  votes          Votes[]
+}
+
+model Voters {
+  id                 String    @id @default(uuid()) @db.Uuid
+  voter_type         VoterType
+  name               String
+  identifier         String
+  department         String?
+  year               String?
+  organisation       String?
+  position           String?
+  device_fingerprint String
+  has_voted          Boolean   @default(false)
+  created_at         DateTime  @default(now())
+  vote               Votes?
+
+  @@unique([voter_type, identifier])
+}
+
+model Votes {
+  id                String   @id @default(uuid()) @db.Uuid
+  voter_id          String   @unique @db.Uuid
+  voter             Voters   @relation(fields: [voter_id], references: [id])
+  project_id        String   @db.Uuid
+  project           Projects @relation(fields: [project_id], references: [id])
+  handled_by_server String
+  response_time_ms  Int
+  timestamp         DateTime @default(now())
+}
+
+model VoteTokens {
+  token                      String   @id @default(uuid())
+  created_at                 DateTime @default(now())
+  expires_at                 DateTime
+  used                       Boolean  @default(false)
+  claimed_device_fingerprint String?
+}
+
+model ServerHealth {
+  server_id            String       @id
+  status               ServerStatus
+  last_heartbeat       DateTime
+  avg_response_time_ms Float
+  active_connections   Int?
+}

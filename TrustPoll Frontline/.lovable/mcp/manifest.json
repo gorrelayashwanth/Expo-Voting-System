@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "trustpoll-mcp",
+      "version": "0.1.0",
+      "title": "TrustPoll MCP"
+    },
+    "tools": [
+      {
+        "name": "list_projects",
+        "title": "List Network Expo projects",
+        "description": "Return the list of Network Expo projects available for voting, ordered by project number.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_dashboard_summary",
+        "title": "Get live dashboard summary",
+        "description": "Return live TrustPoll dashboard data: total votes, per-project vote counts, recent votes, and server health (server_1, server_2).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "ask_chatbot",
+        "title": "Ask the TrustPoll chatbot",
+        "description": "Send a natural-language question about the TrustPoll system (server health, vote counts, etc.) and return the chatbot's response.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The question to ask the TrustPoll chatbot."
+            }
+          },
+          "required": [
+            "question"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
