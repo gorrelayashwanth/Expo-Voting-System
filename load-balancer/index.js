@@ -223,14 +223,11 @@ app.use(['/vote-process', '/api/register-voter', '/api/vote'], tokenValidationMi
 app.post('/api/register-voter', async (req, res) => {
     try {
         const { voter_type, name, identifier, department, year, organisation, position } = req.body;
-        const device_fingerprint = req.headers['x-device-fingerprint'];
+        const device_fingerprint = req.headers['x-device-fingerprint'] || 'demo-device-fingerprint';
+        const activeToken = req.body.token || req.query.token;
 
         if (!voter_type || !name || !identifier) {
             return res.status(400).json({ error: 'voter_type, name, and identifier are required.' });
-        }
-
-        if (!device_fingerprint) {
-            return res.status(400).json({ error: 'X-Device-Fingerprint header is required.' });
         }
 
         let voter = await prisma.voters.findUnique({
@@ -246,7 +243,7 @@ app.post('/api/register-voter', async (req, res) => {
             if (voter.has_voted) {
                 return res.status(400).json({ error: 'You have already voted.' });
             }
-            return res.status(200).json({ voter_id: voter.id, message: 'Existing registration found.' });
+            return res.status(200).json({ voter_id: voter.id, token: activeToken, message: 'Existing registration found.' });
         }
 
         voter = await prisma.voters.create({
@@ -263,7 +260,7 @@ app.post('/api/register-voter', async (req, res) => {
             }
         });
 
-        return res.status(200).json({ voter_id: voter.id, message: 'Registration successful.' });
+        return res.status(200).json({ voter_id: voter.id, token: activeToken, message: 'Registration successful.' });
     } catch (error) {
         console.error("Error registering voter:", error);
         return res.status(500).json({ error: 'Internal Server Error' });

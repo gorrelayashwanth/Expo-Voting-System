@@ -88,6 +88,7 @@ export interface RegisterVoterPayload {
 
 export interface RegisterVoterResponse {
   voter_id: string;
+  token?: string;
 }
 
 

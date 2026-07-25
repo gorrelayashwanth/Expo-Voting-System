@@ -120,8 +120,9 @@ function RegisterPage() {
 
     setSubmitting(true);
     try {
-      const { voter_id } = await api.registerVoter(payload);
-      saveVoter({ voter_id, voter_type: voterType, name: payload.name, token });
+      const res = await api.registerVoter(payload);
+      const activeToken = res.token || token;
+      saveVoter({ voter_id: res.voter_id, voter_type: voterType, name: payload.name, token: activeToken });
       navigate({ to: "/projects" });
 
     } catch (err) {
