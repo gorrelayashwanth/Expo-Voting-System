@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { hasVotedCookie } from "@/lib/cookies";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: typeof search.token === "string" ? search.token : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "TrustPoll — Cast your vote" },
@@ -31,6 +34,7 @@ const options = [
 ] as const;
 
 function IdentitySelection() {
+  const { token } = Route.useSearch();
   const [alreadyVoted, setAlreadyVoted] = useState(false);
   const [checked, setChecked] = useState(false);
 
@@ -62,6 +66,7 @@ function IdentitySelection() {
               key={type}
               to="/register/$type"
               params={{ type }}
+              search={{ token }}
               className="group flex items-center gap-4 rounded-xl bg-card p-6 shadow-card border border-border transition-colors hover:border-foreground/40 min-h-[80px]"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary">
