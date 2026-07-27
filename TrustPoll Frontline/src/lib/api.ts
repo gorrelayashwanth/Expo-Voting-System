@@ -1,8 +1,19 @@
 // Centralized API client for TrustPoll.
 // All requests go to VITE_API_BASE_URL. Never hardcode URLs elsewhere.
 
-export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "https://trustpoll-lb.onrender.com";
+function getApiBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
+  
+  // Guarantee HTTPS backend when frontend is served over HTTPS to eliminate Mixed Content errors
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    if (!envUrl || envUrl.startsWith("http://")) {
+      return "https://trustpoll-lb.onrender.com";
+    }
+  }
+  return envUrl || "https://trustpoll-lb.onrender.com";
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // Device fingerprint is populated by a shared utility (FingerprintJS wired
 // separately). Read it lazily so all POSTs stay in sync.
