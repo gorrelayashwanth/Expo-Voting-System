@@ -133,7 +133,7 @@ app.get('/', (req, res) => {
 app.get('/start-vote', async (req, res) => {
     try {
         const token = crypto.randomUUID();
-        const expires_at = new Date(Date.now() + 15 * 60 * 1000); // 15 mins for demo
+        const expires_at = new Date(Date.now() + 3 * 60 * 1000); // 3 mins time-limited token
         
         await prisma.voteTokens.create({
             data: {
@@ -163,18 +163,8 @@ const tokenValidationMiddleware = async (req, res, next) => {
     try {
         let token = req.query.token || req.body.token;
         
-        // Auto-generate token if missing for seamless developer / demo registration
         if (!token) {
-            token = crypto.randomUUID();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000);
-            await prisma.voteTokens.create({
-                data: {
-                    token,
-                    expires_at,
-                    used: false
-                }
-            });
-            req.body.token = token;
+            return res.status(400).json({ error: 'Token is missing. Please scan the QR code again.' });
         }
 
         let tokenRecord = await prisma.voteTokens.findUnique({
@@ -182,18 +172,11 @@ const tokenValidationMiddleware = async (req, res, next) => {
         });
 
         if (!tokenRecord) {
-            // Auto-create token if unknown in local dev
-            tokenRecord = await prisma.voteTokens.create({
-                data: {
-                    token,
-                    expires_at: new Date(Date.now() + 15 * 60 * 1000),
-                    used: false
-                }
-            });
+            return res.status(404).json({ error: 'Invalid voting token. Please scan the QR code again.' });
         }
 
         if (new Date() > tokenRecord.expires_at) {
-            return res.status(403).json({ error: 'Token has expired.' });
+            return res.status(403).json({ error: 'This link has expired, please scan the QR code again.' });
         }
 
         if (tokenRecord.used) {
@@ -208,6 +191,8 @@ const tokenValidationMiddleware = async (req, res, next) => {
                 where: { token },
                 data: { claimed_device_fingerprint: incomingFingerprint }
             });
+        } else if (tokenRecord.claimed_device_fingerprint !== incomingFingerprint) {
+            return res.status(403).json({ error: 'This link was opened on a different device.' });
         }
 
         next();
@@ -228,6 +213,22 @@ app.post('/api/register-voter', async (req, res) => {
 
         if (!voter_type || !name || !identifier) {
             return res.status(400).json({ error: 'voter_type, name, and identifier are required.' });
+        }
+
+        // Check if cookie indicates already voted
+        if (req.cookies && req.cookies.trustpoll_voted === 'true') {
+            return res.status(400).json({ error: 'You have already voted.' });
+        }
+
+        // Check if device fingerprint has already voted
+        const existingFingerprintVoter = await prisma.voters.findFirst({
+            where: {
+                device_fingerprint,
+                has_voted: true
+            }
+        });
+        if (existingFingerprintVoter) {
+            return res.status(400).json({ error: 'This device has already been used to cast a vote.' });
         }
 
         let voter = await prisma.voters.findUnique({

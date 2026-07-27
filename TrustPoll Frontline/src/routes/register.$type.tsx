@@ -34,27 +34,20 @@ const IDENTIFIER_LABELS: Record<VoterType, string> = {
 };
 
 function friendlyError(raw: string): string {
-  const known = [
-    "voter_type, name, and identifier are required.",
-    "You have already voted.",
-    "Token is missing.",
-    "Token has expired.",
-    "This link was opened on a different device.",
-  ];
-  const match = known.find((m) => raw.includes(m));
-  if (match) {
-    switch (match) {
-      case "voter_type, name, and identifier are required.":
-        return "Please fill in your name and identifier before continuing.";
-      case "You have already voted.":
-        return "This device or identifier has already cast a vote.";
-      case "Token is missing.":
-        return "Your voting link is missing its token. Please scan the QR code again.";
-      case "Token has expired.":
-        return "Your voting link has expired. Please scan a fresh QR code.";
-      case "This link was opened on a different device.":
-        return "This voting link was opened on another device. Open it on the original device.";
-    }
+  if (raw.includes("voter_type, name, and identifier are required.")) {
+    return "Please fill in your name and identifier before continuing.";
+  }
+  if (raw.includes("You have already voted.") || raw.includes("already cast a vote") || raw.includes("already been used to cast a vote")) {
+    return "This device or identifier has already cast a vote.";
+  }
+  if (raw.includes("Token is missing") || raw.includes("Invalid voting token")) {
+    return "Your voting link is missing or invalid. Please scan the QR code again.";
+  }
+  if (raw.includes("expired")) {
+    return "Your voting link has expired. Please scan a fresh QR code.";
+  }
+  if (raw.includes("different device")) {
+    return "This voting link was opened on another device. Open it on the original device.";
   }
   return raw || "Something went wrong. Please try again.";
 }
