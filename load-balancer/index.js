@@ -23,27 +23,36 @@ const prisma = new PrismaClient({ adapter });
 const app = express();
 
 // --------------- CORS ---------------
-// ALLOWED_ORIGIN: comma-separated list of allowed origins, e.g.
-//   http://localhost:3000,https://my-app.lovable.app
-// Leave unset (or set to *) to allow all origins during local dev.
+// Manual CORS middleware — always sets headers reliably on Render.
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
-const allowedOrigins = ALLOWED_ORIGIN === '*' ? '*' : ALLOWED_ORIGIN.split(',').map(o => o.trim());
+const allowedList = ALLOWED_ORIGIN === '*' ? null : ALLOWED_ORIGIN.split(',').map(o => o.trim());
 
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'X-Device-Fingerprint'],
-  exposedHeaders: ['X-Device-Fingerprint'],
-  credentials: ALLOWED_ORIGIN !== '*',
-}));
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin;
 
-// Respond to preflight OPTIONS for all routes (Express 5 uses /{*path} not *)
-app.options('/{*path}', cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'X-Device-Fingerprint'],
-  credentials: ALLOWED_ORIGIN !== '*',
-}));
+  if (allowedList) {
+    // Whitelist mode: reflect origin if it's in the list
+    if (requestOrigin && allowedList.includes(requestOrigin)) {
+      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+      res.setHeader('Vary', 'Origin');
+    }
+  } else {
+    // Allow all origins
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Device-Fingerprint');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Device-Fingerprint');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Max-Age', '86400');
+    return res.status(204).end();
+  }
+
+  next();
+});
 
 app.use(express.json());
 
