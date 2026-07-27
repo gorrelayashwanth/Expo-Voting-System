@@ -15,7 +15,11 @@ if (!connectionString) {
   console.error("DATABASE_URL environment variable is missing.");
   process.exit(1);
 }
-const pool = new Pool({ connectionString });
+const isRender = connectionString.includes('render.com') || process.env.NODE_ENV === 'production';
+const pool = new Pool({
+  connectionString,
+  ssl: isRender ? { rejectUnauthorized: false } : false
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
