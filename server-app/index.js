@@ -119,13 +119,87 @@ const autoMigrate = async () => {
 };
 
 app.get("/", (req, res) => {
-  return res.json({
-    service: `TrustPoll Node (${serverId})`,
-    status: "healthy",
-    port,
-    message: "Vote processing node is active.",
-    endpoints: ["GET /", "GET /health", "POST /process-vote"],
-  });
+  if (req.headers.accept && req.headers.accept.includes("application/json")) {
+    return res.json({
+      service: `TrustPoll Node (${serverId})`,
+      status: "healthy",
+      port,
+      message: "Vote processing node is active.",
+      endpoints: ["GET /", "GET /health", "POST /process-vote"],
+    });
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustPoll Node Status — ${serverId}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #09090b; color: #f4f4f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 1rem; padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #10b981; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.25rem; }
+    .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    p.subtitle { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1.75rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: #09090b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1rem; }
+    .stat-label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.25rem; font-weight: 700; color: #f4f4f5; }
+    .footer { border-top: 1px solid #27272a; padding-top: 1.25rem; font-size: 0.75rem; color: #71717a; display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <span class="dot"></span> NODE ACTIVE & HEALTHY
+    </div>
+    <h1>TrustPoll Node — ${serverId}</h1>
+    <p class="subtitle">Dedicated Vote Processing Server for Network Expo</p>
+
+    <div class="grid">
+      <div class="stat">
+        <div class="stat-label">Server ID</div>
+        <div class="stat-value">${serverId}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Port</div>
+        <div class="stat-value">${port}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Role</div>
+        <div class="stat-value">Processor</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Avg Latency</div>
+        <div class="stat-value" id="latency-val">0.0 ms</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Expo Secure Voting System</span>
+      <span id="ping-time">Auto-refreshing</span>
+    </div>
+  </div>
+  <script>
+    async function updateHealth() {
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        document.getElementById('latency-val').textContent = data.avg_response_time_ms + ' ms';
+        document.getElementById('ping-time').textContent = 'Last ping: ' + new Date().toLocaleTimeString();
+      } catch(e){}
+    }
+    setInterval(updateHealth, 3000);
+    updateHealth();
+  </script>
+</body>
+</html>`;
+
+  res.setHeader("Content-Type", "text/html");
+  return res.send(html);
 });
 
 app.get("/health", (req, res) => {
