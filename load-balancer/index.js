@@ -163,8 +163,18 @@ const tokenValidationMiddleware = async (req, res, next) => {
     try {
         let token = req.query.token || req.body.token;
         
+        // Auto-generate a fresh 3-minute token if missing (direct web navigation)
         if (!token) {
-            return res.status(400).json({ error: 'Token is missing. Please scan the QR code again.' });
+            token = crypto.randomUUID();
+            const expires_at = new Date(Date.now() + 3 * 60 * 1000);
+            await prisma.voteTokens.create({
+                data: {
+                    token,
+                    expires_at,
+                    used: false
+                }
+            });
+            req.body.token = token;
         }
 
         let tokenRecord = await prisma.voteTokens.findUnique({

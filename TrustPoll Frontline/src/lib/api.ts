@@ -2,7 +2,7 @@
 // All requests go to VITE_API_BASE_URL. Never hardcode URLs elsewhere.
 
 export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:4000";
 
 // Device fingerprint is populated by a shared utility (FingerprintJS wired
 // separately). Read it lazily so all POSTs stay in sync.
