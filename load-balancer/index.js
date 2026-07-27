@@ -124,9 +124,17 @@ setInterval(async () => {
     }
 }, 5000);
 
-// Root path redirect to frontend
+// Root path handler
 app.get('/', (req, res) => {
-    res.redirect(FRONTEND_URL);
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.json({
+            service: 'trustpoll-load-balancer',
+            status: 'online',
+            frontendUrl: FRONTEND_URL,
+            servers: [SERVER_1_URL, SERVER_2_URL]
+        });
+    }
+    return res.redirect(FRONTEND_URL);
 });
 
 // GET /start-vote - Generate token & redirect to frontend
@@ -504,9 +512,37 @@ app.post('/api/chatbot-query', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+const autoMigrateLB = async () => {
+    try {
+        const ddl = `
+          DO $$ BEGIN CREATE TYPE "VoterType" AS ENUM ('guest', 'faculty', 'student'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+          DO $$ BEGIN CREATE TYPE "ServerStatus" AS ENUM ('healthy', 'warning', 'down'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+          CREATE TABLE IF NOT EXISTS "Projects" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "project_number" INTEGER NOT NULL, "title" TEXT NOT NULL, "team_name" TEXT, "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+          CREATE TABLE IF NOT EXISTS "Voters" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "voter_type" "VoterType" NOT NULL, "name" TEXT NOT NULL, "identifier" TEXT NOT NULL, "department" TEXT, "year" TEXT, "organisation" TEXT, "position" TEXT, "device_fingerprint" TEXT NOT NULL, "has_voted" BOOLEAN DEFAULT FALSE, "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Voters_voter_type_identifier_key" UNIQUE ("voter_type", "identifier"));
+          CREATE TABLE IF NOT EXISTS "Votes" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "voter_id" UUID NOT NULL UNIQUE REFERENCES "Voters"("id") ON DELETE RESTRICT ON UPDATE CASCADE, "project_id" UUID NOT NULL REFERENCES "Projects"("id") ON DELETE RESTRICT ON UPDATE CASCADE, "handled_by_server" TEXT NOT NULL, "response_time_ms" INTEGER NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+          CREATE TABLE IF NOT EXISTS "VoteTokens" ("token" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "used" BOOLEAN DEFAULT FALSE, "claimed_device_fingerprint" TEXT);
+          CREATE TABLE IF NOT EXISTS "ServerHealth" ("server_id" TEXT PRIMARY KEY, "status" "ServerStatus" NOT NULL, "last_heartbeat" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_response_time_ms" DOUBLE PRECISION NOT NULL, "active_connections" INTEGER);
+        `;
+        await pool.query(ddl);
+        const projCheck = await pool.query('SELECT COUNT(*) FROM "Projects"');
+        if (parseInt(projCheck.rows[0].count, 10) === 0) {
+            await pool.query(`
+                INSERT INTO "Projects" (project_number, title, team_name) VALUES
+                (101, 'AI-Powered Ballot Counter', 'ByteBenders'),
+                (102, 'Secure Blockchain Voting', 'Decentralizers'),
+                (103, 'Biometric Voter Authentication', 'BioLock')
+            `);
+            console.log(`[load-balancer] Auto-seeded default projects.`);
+        }
+    } catch (err) {
+        console.error(`[load-balancer] Auto-migration notice:`, err.message);
+    }
+};
+
+app.listen(PORT, async () => {
     console.log(`Load balancer is running on http://localhost:${PORT}`);
     console.log(`Forwarding requests to:`);
     console.log(`- ${SERVER_1_URL}`);
     console.log(`- ${SERVER_2_URL}`);
+    await autoMigrateLB();
 });
