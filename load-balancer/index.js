@@ -47,7 +47,7 @@ const PORT = process.env.PORT || 4000;
 const SERVER_1_URL = process.env.SERVER_1_URL;
 const SERVER_2_URL = process.env.SERVER_2_URL;
 const THIRD_SERVER_URL = process.env.THIRD_SERVER_URL;
-const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:8080").replace(/\/$/, "");
+const FRONTEND_URL = (process.env.FRONTEND_URL || "https://trustpoll.pages.dev").replace(/\/$/, "");
 
 if (!SERVER_1_URL || !SERVER_2_URL) {
     console.error("SERVER_1_URL and SERVER_2_URL must be set in .env");
@@ -151,11 +151,7 @@ app.get('/start-vote', async (req, res) => {
             }
         });
 
-        const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
-        const reqProto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-        const targetFrontend = process.env.FRONTEND_URL || (reqHost && !reqHost.includes('localhost:4000') ? `${reqProto}://${reqHost}` : FRONTEND_URL);
-
-        res.redirect(`${targetFrontend}/?token=${token}`);
+        res.redirect(`${FRONTEND_URL}/?token=${token}`);
     } catch (error) {
         console.error("Error creating vote token:", error);
         res.status(500).send("Internal Server Error");
