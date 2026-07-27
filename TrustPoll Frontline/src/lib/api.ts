@@ -44,12 +44,29 @@ export async function apiFetch<T>(path: string, opts: Options = {}): Promise<T> 
   }
 
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal,
+    });
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      API_BASE_URL.startsWith("http:")
+    ) {
+      throw new Error(
+        "Mixed Content Error: HTTPS website cannot call HTTP backend. Please update VITE_API_BASE_URL to your deployed HTTPS backend.",
+      );
+    }
+    throw new Error(
+      `Cannot connect to load balancer at ${API_BASE_URL}. Please ensure the backend is running.`,
+    );
+  }
 
   if (!res.ok) {
     let msg = `Request failed (${res.status})`;

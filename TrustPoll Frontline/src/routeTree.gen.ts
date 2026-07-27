@@ -14,6 +14,7 @@ import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as QrRouteImport } from './routes/qr'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -44,6 +45,11 @@ const McpRoute = McpRouteImport.update({
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QrRoute = QrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93ListToolsRoute =
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/mcp': typeof McpRoute
   '/projects': typeof ProjectsRoute
+  '/qr': typeof QrRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/register/$type': typeof RegisterTypeRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/confirmation': typeof ConfirmationRoute
   '/mcp': typeof McpRoute
   '/projects': typeof ProjectsRoute
+  '/qr': typeof QrRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/register/$type': typeof RegisterTypeRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/mcp': typeof McpRoute
   '/projects': typeof ProjectsRoute
+  '/qr': typeof QrRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/register/$type': typeof RegisterTypeRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/mcp'
     | '/projects'
+    | '/qr'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/register/$type'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/confirmation'
     | '/mcp'
     | '/projects'
+    | '/qr'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/register/$type'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/mcp'
     | '/projects'
+    | '/qr'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/register/$type'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   McpRoute: typeof McpRoute
   ProjectsRoute: typeof ProjectsRoute
+  QrRoute: typeof QrRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   RegisterTypeRoute: typeof RegisterTypeRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qr': {
+      id: '/qr'
+      path: '/qr'
+      fullPath: '/qr'
+      preLoaderRoute: typeof QrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -274,6 +294,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   McpRoute: McpRoute,
   ProjectsRoute: ProjectsRoute,
+  QrRoute: QrRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,

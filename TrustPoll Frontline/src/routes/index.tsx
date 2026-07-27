@@ -84,9 +84,18 @@ function IdentitySelection() {
         </div>
       )}
 
-      <p className="mt-auto pt-10 text-xs text-muted-foreground text-center">
-        Network Expo · Live Voting
-      </p>
+      <div className="mt-auto pt-10 flex flex-col items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <Link to="/qr" className="hover:underline flex items-center gap-1 font-medium text-foreground">
+            📱 Booth QR Kiosk
+          </Link>
+          <span>·</span>
+          <Link to="/dashboard" className="hover:underline">
+            📊 Live Dashboard
+          </Link>
+        </div>
+        <p>Network Expo · Live Voting</p>
+      </div>
     </div>
   );
 }
