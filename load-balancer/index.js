@@ -143,7 +143,11 @@ app.get('/start-vote', async (req, res) => {
             }
         });
 
-        res.redirect(`${FRONTEND_URL}/?token=${token}`);
+        const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
+        const reqProto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+        const targetFrontend = process.env.FRONTEND_URL || (reqHost && !reqHost.includes('localhost:4000') ? `${reqProto}://${reqHost}` : FRONTEND_URL);
+
+        res.redirect(`${targetFrontend}/?token=${token}`);
     } catch (error) {
         console.error("Error creating vote token:", error);
         res.status(500).send("Internal Server Error");
