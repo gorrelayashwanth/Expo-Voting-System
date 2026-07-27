@@ -158,11 +158,21 @@ app.get('/start-vote', async (req, res) => {
         res.redirect(`${FRONTEND_URL}/?token=${token}`);
     } catch (error) {
         console.error("Error creating vote token:", error);
-        res.status(500).send("Internal Server Error");
+        res.status(500).json({ error: error.message || "Internal Server Error" });
     }
 });
 
-// GET /vote - Redirect to frontend with token
+app.get('/api/projects', async (req, res) => {
+    try {
+        const projects = await prisma.projects.findMany({
+            orderBy: { project_number: 'asc' }
+        });
+        res.json(projects);
+    } catch (error) {
+        console.error("Error fetching projects:", error);
+        res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+});// GET /vote - Redirect to frontend with token
 app.get('/vote', async (req, res) => {
     const token = req.query.token;
     if (token) {
