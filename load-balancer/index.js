@@ -23,24 +23,9 @@ const prisma = new PrismaClient({ adapter });
 const app = express();
 
 // --------------- CORS ---------------
-// Manual CORS middleware — always sets headers reliably on Render.
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
-const allowedList = ALLOWED_ORIGIN === '*' ? null : ALLOWED_ORIGIN.split(',').map(o => o.trim());
-
+// Always allow all origins — this is a public voting API.
 app.use((req, res, next) => {
-  const requestOrigin = req.headers.origin;
-
-  if (allowedList) {
-    // Whitelist mode: reflect origin if it's in the list
-    if (requestOrigin && allowedList.includes(requestOrigin)) {
-      res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-      res.setHeader('Vary', 'Origin');
-    }
-  } else {
-    // Allow all origins
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Device-Fingerprint');
   res.setHeader('Access-Control-Expose-Headers', 'X-Device-Fingerprint');
