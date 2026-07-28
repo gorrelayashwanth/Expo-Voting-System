@@ -131,6 +131,23 @@ const autoMigrate = async () => {
   }
 };
 
+app.get("/api/recent-node-votes", async (req, res) => {
+  try {
+    const votes = await prisma.votes.findMany({
+      where: { handled_by_server: serverId },
+      orderBy: { timestamp: "desc" },
+      take: 15,
+      include: {
+        voter: { select: { name: true, voter_type: true, identifier: true } },
+        project: { select: { project_number: true, title: true, team_name: true } }
+      }
+    });
+    return res.json(votes);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/", (req, res) => {
   if (req.headers.accept && req.headers.accept.includes("application/json")) {
     return res.json({
@@ -138,7 +155,7 @@ app.get("/", (req, res) => {
       status: "healthy",
       port,
       message: "Vote processing node is active.",
-      endpoints: ["GET /", "GET /health", "POST /process-vote"],
+      endpoints: ["GET /", "GET /health", "GET /api/recent-node-votes", "POST /process-vote"],
     });
   }
 
@@ -147,66 +164,127 @@ app.get("/", (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TrustPoll Node Status — ${serverId}</title>
+  <title>TrustPoll Node Live Stream — ${serverId}</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #09090b; color: #f4f4f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-    .card { background: #18181b; border: 1px solid #27272a; border-radius: 1rem; padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #10b981; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.25rem; }
-    .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
-    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
-    p.subtitle { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1.75rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    .stat { background: #09090b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1rem; }
-    .stat-label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem; }
-    .stat-value { font-size: 1.25rem; font-weight: 700; color: #f4f4f5; }
-    .footer { border-top: 1px solid #27272a; padding-top: 1.25rem; font-size: 0.75rem; color: #71717a; display: flex; justify-content: space-between; align-items: center; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    body { background: #09090b; color: #f4f4f5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2rem 1rem; }
+    .container { max-width: 650px; width: 100%; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 1rem; padding: 1.75rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 1.5rem; }
+    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
+    .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
+    h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    p.subtitle { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .stat { background: #09090b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 0.875rem; text-align: center; }
+    .stat-label { font-size: 0.7rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.25rem; font-weight: 700; color: #10b981; }
+    
+    .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .feed-title { font-size: 1rem; font-weight: 700; color: #f4f4f5; display: flex; align-items: center; gap: 0.5rem; }
+    .feed-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 400px; overflow-y: auto; }
+    .vote-item { background: #09090b; border: 1px solid #27272a; border-left: 4px solid #10b981; border-radius: 0.5rem; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .voter-info { font-weight: 600; font-size: 0.9rem; color: #f4f4f5; }
+    .project-info { font-size: 0.8rem; color: #a1a1aa; margin-top: 0.15rem; }
+    .vote-meta { text-align: right; }
+    .latency-tag { font-size: 0.75rem; font-weight: 700; color: #10b981; background: rgba(16,185,129,0.1); padding: 0.15rem 0.5rem; border-radius: 0.375rem; }
+    .time-tag { font-size: 0.7rem; color: #71717a; margin-top: 0.2rem; }
+    .empty { text-align: center; color: #71717a; font-size: 0.85rem; padding: 2rem 0; }
+    .footer { border-top: 1px solid #27272a; padding-top: 1rem; font-size: 0.75rem; color: #71717a; display: flex; justify-content: space-between; margin-top: 1.5rem; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="badge">
-      <span class="dot"></span> NODE ACTIVE & HEALTHY
-    </div>
-    <h1>TrustPoll Node — ${serverId}</h1>
-    <p class="subtitle">Dedicated Vote Processing Server for Network Expo</p>
+  <div class="container">
+    <div class="card">
+      <div class="badge">
+        <span class="dot"></span> NODE INGESTION STREAM ACTIVE
+      </div>
+      <h1>TrustPoll Node — ${serverId}</h1>
+      <p class="subtitle">Live Dedicated Processor Node | Network Expo 2026</p>
 
-    <div class="grid">
-      <div class="stat">
-        <div class="stat-label">Server ID</div>
-        <div class="stat-value">${serverId}</div>
+      <div class="grid">
+        <div class="stat">
+          <div class="stat-label">Server ID</div>
+          <div class="stat-value" style="color:#f4f4f5">${serverId}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Ingested</div>
+          <div class="stat-value" id="total-count">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Avg Latency</div>
+          <div class="stat-value" id="latency-val">0 ms</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Port</div>
-        <div class="stat-value">${port}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Role</div>
-        <div class="stat-value">Processor</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">Avg Latency</div>
-        <div class="stat-value" id="latency-val">0.0 ms</div>
-      </div>
-    </div>
 
-    <div class="footer">
-      <span>Expo Secure Voting System</span>
-      <span id="ping-time">Auto-refreshing</span>
+      <div class="feed-header">
+        <div class="feed-title">⚡ Live Ingestion Log</div>
+        <span style="font-size:0.75rem; color:#71717a;" id="live-indicator">Polling every 2s</span>
+      </div>
+
+      <div class="feed-list" id="vote-feed">
+        <div class="empty">Waiting for incoming votes from Load Balancer...</div>
+      </div>
+
+      <div class="footer">
+        <span>TrustPoll High-Throughput Node</span>
+        <span id="ping-time">Syncing...</span>
+      </div>
     </div>
   </div>
+
   <script>
-    async function updateHealth() {
+    let knownVoteIds = new Set();
+
+    async function updateDashboard() {
       try {
-        const res = await fetch('/health');
-        const data = await res.json();
-        document.getElementById('latency-val').textContent = data.avg_response_time_ms + ' ms';
-        document.getElementById('ping-time').textContent = 'Last ping: ' + new Date().toLocaleTimeString();
+        const [healthRes, votesRes] = await Promise.all([
+          fetch('/health'),
+          fetch('/api/recent-node-votes')
+        ]);
+        
+        const health = await healthRes.json();
+        document.getElementById('latency-val').textContent = health.avg_response_time_ms + ' ms';
+        document.getElementById('ping-time').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+
+        const votes = await votesRes.json();
+        document.getElementById('total-count').textContent = votes.length;
+
+        const feedEl = document.getElementById('vote-feed');
+        if (!votes || votes.length === 0) {
+          feedEl.innerHTML = '<div class="empty">No votes processed on this node yet.</div>';
+          return;
+        }
+
+        feedEl.innerHTML = votes.map(v => {
+          const voterName = v.voter ? v.voter.name : 'Voter';
+          const voterType = v.voter ? v.voter.voter_type : 'voter';
+          const projNum = v.project ? pNum(v.project.project_number) : '';
+          const projTitle = v.project ? v.project.title : 'Project';
+          const timeStr = new Date(v.timestamp).toLocaleTimeString();
+          
+          return \`
+            <div class="vote-item">
+              <div>
+                <div class="voter-info">⚡ \${voterName} <span style="font-size:0.75rem; font-weight:400; color:#a1a1aa;">(\${voterType})</span></div>
+                <div class="project-info">Project #\${projNum}: \${projTitle}</div>
+              </div>
+              <div class="vote-meta">
+                <span class="latency-tag">\${v.response_time_ms}ms</span>
+                <div class="time-tag">\${timeStr}</div>
+              </div>
+            </div>
+          \`;
+        }).join('');
+
       } catch(e){}
     }
-    setInterval(updateHealth, 3000);
-    updateHealth();
+
+    function pNum(num) { return num ? num : ''; }
+
+    setInterval(updateDashboard, 2000);
+    updateDashboard();
   </script>
 </body>
 </html>`;
