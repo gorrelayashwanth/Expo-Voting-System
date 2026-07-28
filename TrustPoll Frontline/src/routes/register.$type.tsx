@@ -27,15 +27,9 @@ const TITLES: Record<VoterType, string> = {
   student: "Student registration",
 };
 
-const IDENTIFIER_LABELS: Record<VoterType, string> = {
-  guest: "ID / Reference",
-  faculty: "Employee ID",
-  student: "Roll Number",
-};
-
 function friendlyError(raw: string): string {
   if (raw.includes("voter_type, name, and identifier are required.")) {
-    return "Please fill in your name and identifier before continuing.";
+    return "Please fill in all required fields before continuing.";
   }
   if (raw.includes("You have already voted.") || raw.includes("already cast a vote") || raw.includes("already been used to cast a vote")) {
     return "This device or identifier has already cast a vote.";
@@ -76,7 +70,6 @@ function RegisterPage() {
   const voterType = parsed.data;
 
   const [name, setName] = useState("");
-  const [identifier, setIdentifier] = useState("");
   const [department, setDepartment] = useState("");
   const [year, setYear] = useState("");
   const [organisation, setOrganisation] = useState("");
@@ -84,31 +77,56 @@ function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function validate(): string | null {
+    if (!name.trim()) return "Name is required.";
+    if (voterType === "guest") {
+      if (!organisation.trim()) return "Organisation / Business Name is required.";
+      if (!position.trim()) return "Position / Designation is required.";
+    }
+    if (voterType === "faculty") {
+      if (!department.trim()) return "Department is required.";
+    }
+    if (voterType === "student") {
+      if (!year.trim()) return "Year is required.";
+      if (!department.trim()) return "Department is required.";
+    }
+    return null;
+  }
+
+  // Build a unique identifier from the filled fields (used for duplicate detection)
+  function buildIdentifier(): string {
+    if (voterType === "guest") return `${name.trim()}|${organisation.trim()}`;
+    if (voterType === "faculty") return `${name.trim()}|${department.trim()}`;
+    // student
+    return `${name.trim()}|${year.trim()}|${department.trim()}`;
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || !identifier.trim()) {
-      setError("Please fill in your name and identifier before continuing.");
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     const payload: RegisterVoterPayload = {
       voter_type: voterType,
       name: name.trim(),
-      identifier: identifier.trim(),
+      identifier: buildIdentifier(),
       token,
     };
     if (voterType === "student") {
-      if (department.trim()) payload.department = department.trim();
-      if (year.trim()) payload.year = year.trim();
+      payload.department = department.trim();
+      payload.year = year.trim();
     }
     if (voterType === "faculty") {
-      if (department.trim()) payload.department = department.trim();
-      if (position.trim()) payload.position = position.trim();
+      payload.department = department.trim();
     }
     if (voterType === "guest") {
-      if (organisation.trim()) payload.organisation = organisation.trim();
+      payload.organisation = organisation.trim();
+      payload.position = position.trim();
     }
 
     setSubmitting(true);
@@ -137,7 +155,8 @@ function RegisterPage() {
       </header>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <Field label="Full name" htmlFor="name">
+        {/* Name — common to all types */}
+        <Field label="Full name" htmlFor="name" required>
           <input
             id="name"
             type="text"
@@ -149,29 +168,50 @@ function RegisterPage() {
           />
         </Field>
 
-        <Field label={IDENTIFIER_LABELS[voterType]} htmlFor="identifier">
-          <input
-            id="identifier"
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            className="input"
-            required
-          />
-        </Field>
-
-        {voterType === "student" && (
+        {/* ----- Guest fields ----- */}
+        {voterType === "guest" && (
           <>
-            <Field label="Department" htmlFor="department">
+            <Field label="Organisation / Business Name" htmlFor="organisation" required>
               <input
-                id="department"
+                id="organisation"
                 type="text"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                value={organisation}
+                onChange={(e) => setOrganisation(e.target.value)}
                 className="input"
+                required
               />
             </Field>
-            <Field label="Year" htmlFor="year">
+            <Field label="Position / Designation" htmlFor="position" required>
+              <input
+                id="position"
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="input"
+                required
+              />
+            </Field>
+          </>
+        )}
+
+        {/* ----- Faculty fields ----- */}
+        {voterType === "faculty" && (
+          <Field label="Department" htmlFor="department" required>
+            <input
+              id="department"
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="input"
+              required
+            />
+          </Field>
+        )}
+
+        {/* ----- Student fields ----- */}
+        {voterType === "student" && (
+          <>
+            <Field label="Year" htmlFor="year" required>
               <input
                 id="year"
                 type="text"
@@ -179,44 +219,20 @@ function RegisterPage() {
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
                 className="input"
+                required
               />
             </Field>
-          </>
-        )}
-
-        {voterType === "faculty" && (
-          <>
-            <Field label="Department" htmlFor="department">
+            <Field label="Department" htmlFor="department" required>
               <input
                 id="department"
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="input"
-              />
-            </Field>
-            <Field label="Position" htmlFor="position">
-              <input
-                id="position"
-                type="text"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className="input"
+                required
               />
             </Field>
           </>
-        )}
-
-        {voterType === "guest" && (
-          <Field label="Organisation" htmlFor="organisation">
-            <input
-              id="organisation"
-              type="text"
-              value={organisation}
-              onChange={(e) => setOrganisation(e.target.value)}
-              className="input"
-            />
-          </Field>
         )}
 
         {error && (
@@ -261,15 +277,20 @@ function Field({
   label,
   htmlFor,
   children,
+  required = false,
 }: {
   label: string;
   htmlFor: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label htmlFor={htmlFor} className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium text-muted-foreground">
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
+      </span>
       {children}
     </label>
   );
 }
+
