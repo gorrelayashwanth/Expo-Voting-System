@@ -88,6 +88,7 @@ app.post("/process-vote", async (req, res) => {
       });
     });
 
+    const duration = Date.now() - start;
     return res.json({
       success: true,
       message: "Vote processed successfully.",
