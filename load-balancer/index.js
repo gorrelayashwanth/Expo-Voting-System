@@ -549,4 +549,15 @@ app.listen(PORT, async () => {
     console.log(`- ${SERVER_1_URL}`);
     console.log(`- ${SERVER_2_URL}`);
     await autoMigrateLB();
+
+    // ⚡ Keep-Alive Ping: Pings self and nodes every 8 minutes to prevent Render free instances from sleeping
+    setInterval(async () => {
+        try {
+            await fetch('https://trustpoll-lb.onrender.com/api/projects');
+            if (SERVER_1_URL) await fetch(`${SERVER_1_URL}/health`);
+            if (SERVER_2_URL) await fetch(`${SERVER_2_URL}/health`);
+        } catch (e) {
+            // Background keep-alive silent error ignore
+        }
+    }, 8 * 60 * 1000);
 });
