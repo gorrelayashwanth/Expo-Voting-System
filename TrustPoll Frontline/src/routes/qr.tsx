@@ -14,19 +14,21 @@ export const Route = createFileRoute("/qr")({
 });
 
 function QRKioskPage() {
-  const defaultTarget = typeof window !== "undefined"
-    ? `${API_BASE_URL || window.location.origin}/start-vote`
-    : "http://localhost:4000/start-vote";
+  function getQrTargetUrl(): string {
+    if (typeof window !== "undefined" && window.location.protocol === "https:") {
+      return "https://trustpoll-lb.onrender.com/start-vote";
+    }
+    const base = API_BASE_URL && !API_BASE_URL.includes("localhost")
+      ? API_BASE_URL
+      : "https://trustpoll-lb.onrender.com";
+    return `${base}/start-vote`;
+  }
 
-  const [targetUrl, setTargetUrl] = useState(defaultTarget);
+  const [targetUrl, setTargetUrl] = useState(getQrTargetUrl);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (API_BASE_URL) {
-      setTargetUrl(`${API_BASE_URL}/start-vote`);
-    } else if (typeof window !== "undefined") {
-      setTargetUrl(`${window.location.origin}/start-vote`);
-    }
+    setTargetUrl(getQrTargetUrl());
   }, []);
 
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(targetUrl)}`;
