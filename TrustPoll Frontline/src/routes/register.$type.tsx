@@ -70,6 +70,7 @@ function RegisterPage() {
   const voterType = parsed.data;
 
   const [name, setName] = useState("");
+  const [rollNumber, setRollNumber] = useState("");
   const [department, setDepartment] = useState("");
   const [year, setYear] = useState("");
   const [organisation, setOrganisation] = useState("");
@@ -87,6 +88,7 @@ function RegisterPage() {
       if (!department.trim()) return "Department is required.";
     }
     if (voterType === "student") {
+      if (!rollNumber.trim()) return "Roll Number is required.";
       if (!year.trim()) return "Year is required.";
       if (!department.trim()) return "Department is required.";
     }
@@ -98,7 +100,7 @@ function RegisterPage() {
     if (voterType === "guest") return `${name.trim()}|${organisation.trim()}`;
     if (voterType === "faculty") return `${name.trim()}|${department.trim()}`;
     // student
-    return `${name.trim()}|${year.trim()}|${department.trim()}`;
+    return `${rollNumber.trim()}|${year.trim()}|${department.trim()}`;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -211,6 +213,16 @@ function RegisterPage() {
         {/* ----- Student fields ----- */}
         {voterType === "student" && (
           <>
+            <Field label="Roll Number / Student ID" htmlFor="rollNumber" required>
+              <input
+                id="rollNumber"
+                type="text"
+                value={rollNumber}
+                onChange={(e) => setRollNumber(e.target.value)}
+                className="input"
+                required
+              />
+            </Field>
             <Field label="Year" htmlFor="year" required>
               <input
                 id="year"
