@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api, type Project } from "@/lib/api";
-import { loadVoter } from "@/lib/voter-session";
-import { hasVotedCookie } from "@/lib/cookies";
-
+import { getVoter, clearVoter } from "@/lib/voter-session";
+import { setVotedCookie, hasVotedCookie } from "@/lib/cookies";
+import { CheckCircle2, Sparkles, Award } from "lucide-react";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({
     meta: [
-      { title: "Choose a project — TrustPoll" },
-      { name: "description", content: "Select a Network Expo project to vote for." },
+      { title: "Select a Project — TrustPoll" },
+      { name: "description", content: "Choose one Network Expo project to cast your vote for." },
     ],
   }),
   component: ProjectsPage,
@@ -39,60 +39,67 @@ function friendlyError(raw: string): string {
 
 function ProjectsPage() {
   const navigate = useNavigate();
-  const voter = typeof window !== "undefined" ? loadVoter() : null;
-
-  useEffect(() => {
-    if (hasVotedCookie()) navigate({ to: "/", replace: true });
-  }, [navigate]);
-
-
-  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [voter] = useState(() => getVoter());
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const ctrl = new AbortController();
+    if (hasVotedCookie()) {
+      navigate({ to: "/confirmation", replace: true });
+      return;
+    }
+
+    if (!voter) {
+      navigate({ to: "/", replace: true });
+      return;
+    }
+
+    const controller = new AbortController();
     setLoading(true);
+    setLoadError(null);
+
     api
-      .listProjects(ctrl.signal)
-      .then((data) => {
-        setProjects(data);
-        setLoadError(null);
-      })
+      .listProjects(controller.signal)
+      .then((data) => setProjects(data))
       .catch((err) => {
-        if (ctrl.signal.aborted) return;
+        if (controller.signal.aborted) return;
         setLoadError(friendlyError(err instanceof Error ? err.message : String(err)));
       })
       .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
-    return () => ctrl.abort();
-  }, []);
 
-  const filtered = useMemo(() => {
-    if (!projects) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter((p) => {
-      const hay = `${p.project_number} ${p.title} ${p.team_name ?? ""}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [projects, query]);
+    return () => controller.abort();
+  }, [navigate, voter]);
+
+  const filtered = projects.filter((p) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      String(p.project_number).includes(q) ||
+      p.title.toLowerCase().includes(q) ||
+      (p.team_name && p.team_name.toLowerCase().includes(q))
+    );
+  });
 
   async function submit() {
-    if (!voter?.voter_id || !selectedId) return;
+    if (!voter || !selectedId || submitting) return;
     setSubmitting(true);
     setSubmitError(null);
+
     try {
       const res = await api.vote(voter.voter_id, selectedId, voter.token);
+      setVotedCookie();
+      clearVoter();
       navigate({
         to: "/confirmation",
-        search: { server: res.handled_by_server ?? "" },
+        search: { server: res.handled_by_server || "" },
+        replace: true,
       });
     } catch (err) {
       setSubmitError(friendlyError(err instanceof Error ? err.message : String(err)));
@@ -102,113 +109,120 @@ function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen max-w-md mx-auto px-5 py-10 w-full flex flex-col">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Select a project</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choose one Network Expo project to cast your vote for.
-        </p>
-      </header>
-
-      {!voter && (
-        <div
-          role="alert"
-          className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
-          You need to register first. Please return to the start screen.
+    <div className="min-h-screen flex flex-col justify-between px-5 py-8 max-w-md mx-auto w-full font-sans antialiased">
+      <div>
+        {/* Step 2 Header */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold mb-6">
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <Award className="h-4 w-4" /> Step 2 of 2
+          </span>
+          <span className="px-2.5 py-1 rounded-full bg-secondary text-[11px]">Ballot Selection</span>
         </div>
-      )}
 
-      <input
-        type="search"
-        placeholder="Search by number, title, or team…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="h-11 w-full rounded-lg border border-border bg-background px-3.5 text-sm outline-none focus:border-foreground/60"
-        disabled={loading || !!loadError}
-      />
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">Select a Project</h1>
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            Choose one Network Expo project to cast your official vote.
+          </p>
+        </header>
 
-      <div className="mt-4 flex flex-col gap-2 min-h-[200px]">
-        {loading && <ProjectSkeletons />}
+        {/* Search Bar */}
+        <div className="mb-4">
+          <input
+            type="search"
+            placeholder="Search by number, title, or team..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-style text-xs"
+          />
+        </div>
 
-        {!loading && loadError && (
-          <div
-            role="alert"
-            className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-          >
+        {loadError && (
+          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive font-medium mb-4">
             {loadError}
           </div>
         )}
 
-        {!loading && !loadError && projects && projects.length === 0 && (
-          <div className="rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground text-center">
-            Project list not yet available — please check back shortly
-          </div>
-        )}
+        {/* Projects List */}
+        <div className="flex flex-col gap-3">
+          {loading && <ProjectSkeletons />}
 
-        {!loading && !loadError && filtered.length === 0 && projects && projects.length > 0 && (
-          <div className="rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground text-center">
-            No projects match “{query}”.
-          </div>
-        )}
+          {!loading && !loadError && filtered.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center text-xs text-muted-foreground">
+              {projects.length === 0 ? "No projects loaded yet." : "No projects match your search query."}
+            </div>
+          )}
 
-        {!loading &&
-          !loadError &&
-          filtered.map((p) => {
-            const selected = p.id === selectedId;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setSelectedId(p.id)}
-                aria-pressed={selected}
-                className={`text-left rounded-xl border p-4 transition-colors ${
-                  selected
-                    ? "border-foreground bg-secondary"
-                    : "border-border bg-card hover:border-foreground/40"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-semibold">
-                    {p.project_number}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{p.title}</div>
-                    {p.team_name && (
-                      <div className="text-xs text-muted-foreground truncate">
-                        {p.team_name}
+          {!loading &&
+            filtered.map((p) => {
+              const selected = selectedId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setSelectedId(p.id)}
+                  className={`group w-full rounded-2xl p-5 text-left transition-all border shadow-sm ${
+                    selected
+                      ? "border-emerald-500/80 bg-emerald-500/5 shadow-md"
+                      : "border-border/80 bg-card/90 hover:border-emerald-500/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors ${
+                      selected ? "bg-emerald-500 text-white" : "bg-secondary text-foreground"
+                    }`}>
+                      #{p.project_number}
+                    </span>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-foreground tracking-tight leading-snug">
+                        {p.title}
                       </div>
-                    )}
+                      {p.team_name && (
+                        <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                          Team: {p.team_name}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={`h-5 w-5 rounded-full border flex items-center justify-center transition-colors shrink-0 ${
+                      selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"
+                    }`}>
+                      {selected && <CheckCircle2 className="h-4 w-4" />}
+                    </div>
                   </div>
-                  <div
-                    className={`h-4 w-4 rounded-full border ${
-                      selected ? "border-foreground bg-foreground" : "border-border"
-                    }`}
-                    aria-hidden
-                  />
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+        </div>
+
+        {submitError && (
+          <div role="alert" className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive font-medium">
+            {submitError}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!voter || !selectedId || submitting || loading}
+          className="mt-6 h-12 w-full rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+        >
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 animate-spin" /> Committing Ballot...
+            </span>
+          ) : (
+            "Submit Vote"
+          )}
+        </button>
       </div>
 
-      {submitError && (
-        <div
-          role="alert"
-          className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
-          {submitError}
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={submit}
-        disabled={!voter || !selectedId || submitting || loading}
-        className="mt-6 h-11 w-full rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
-      >
-        {submitting ? "Submitting vote…" : "Submit Vote"}
-      </button>
+      {/* Clean Mobile Voter Footer */}
+      <footer className="mt-12 pt-6 border-t border-border/40 text-center text-xs text-muted-foreground">
+        <p className="font-medium text-foreground/80">TrustPoll · Network Expo 2026</p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">Secure Multi-Node Distributed Voting System</p>
+      </footer>
     </div>
   );
 }
@@ -216,16 +230,13 @@ function ProjectsPage() {
 function ProjectSkeletons() {
   return (
     <>
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="rounded-xl border border-border bg-card p-4 animate-pulse"
-        >
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-secondary" />
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="rounded-2xl border border-border bg-card p-5 animate-pulse">
+          <div className="flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-secondary" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-3/4 rounded bg-secondary" />
-              <div className="h-2.5 w-1/2 rounded bg-secondary" />
+              <div className="h-3.5 w-3/4 rounded-md bg-secondary" />
+              <div className="h-2.5 w-1/2 rounded-md bg-secondary" />
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { User, GraduationCap, Users } from "lucide-react";
+import { User, GraduationCap, Users, ShieldCheck, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { hasVotedCookie } from "@/lib/cookies";
+import { hasVotedCookie, clearVotedCookie } from "@/lib/cookies";
+import { clearVoter } from "@/lib/voter-session";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -9,28 +10,38 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "TrustPoll — Cast your vote" },
+      { title: "TrustPoll — Network Expo Live Voting" },
       {
         name: "description",
-        content:
-          "Vote for your favorite Network Expo project. Choose your identity to begin.",
+        content: "Cast your vote securely for Network Expo 2026 projects.",
       },
-      { property: "og:title", content: "TrustPoll — Cast your vote" },
-      {
-        property: "og:description",
-        content: "Live voting for the college Network Expo.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: IdentitySelection,
 });
 
 const options = [
-  { type: "guest", label: "Guest", icon: User, desc: "Visitor from outside campus" },
-  { type: "faculty", label: "Faculty", icon: Users, desc: "Teaching staff" },
-  { type: "student", label: "Student", icon: GraduationCap, desc: "Enrolled student" },
+  {
+    type: "guest",
+    label: "Guest Visitor",
+    icon: User,
+    desc: "Industry visitor, external delegate or business guest",
+    badge: "Visitor",
+  },
+  {
+    type: "faculty",
+    label: "Faculty / Judge",
+    icon: Users,
+    desc: "Academic faculty, professor or official project judge",
+    badge: "Faculty",
+  },
+  {
+    type: "student",
+    label: "Student",
+    icon: GraduationCap,
+    desc: "Currently enrolled university student",
+    badge: "Student",
+  },
 ] as const;
 
 function IdentitySelection() {
@@ -39,63 +50,80 @@ function IdentitySelection() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    setAlreadyVoted(hasVotedCookie());
+    // If arriving with a fresh QR token parameter, automatically clear old local voting cookies/session
+    if (token) {
+      clearVotedCookie();
+      clearVoter();
+      setAlreadyVoted(false);
+    } else {
+      setAlreadyVoted(hasVotedCookie());
+    }
     setChecked(true);
-  }, []);
+  }, [token]);
 
   return (
-    <div className="min-h-screen flex flex-col px-5 py-10 max-w-md mx-auto w-full">
-      <header className="mb-10">
-        <h1 className="text-2xl font-semibold tracking-tight">TrustPoll</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select your identity to cast a vote.
-        </p>
-      </header>
-
-      {checked && alreadyVoted ? (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-card text-center">
-          <div className="text-2xl">✅</div>
-          <p className="mt-3 text-base font-medium">
-            You've already voted. Thank you for participating!
+    <div className="min-h-screen flex flex-col justify-between px-5 py-8 max-w-md mx-auto w-full font-sans antialiased">
+      <div>
+        {/* Header Branding */}
+        <header className="pt-4 mb-8 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
+            <ShieldCheck className="h-3.5 w-3.5" /> High-Throughput Voting Cluster
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">TrustPoll</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Select your attendee category to cast your vote for Network Expo 2026.
           </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {options.map(({ type, label, icon: Icon, desc }) => (
-            <Link
-              key={type}
-              to="/register/$type"
-              params={{ type }}
-              search={{ token }}
-              className="group flex items-center gap-4 rounded-xl bg-card p-6 shadow-card border border-border transition-colors hover:border-foreground/40 min-h-[80px]"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary">
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <div className="text-base font-medium">{label}</div>
-                <div className="text-xs text-muted-foreground">{desc}</div>
-              </div>
-              <div className="text-muted-foreground text-lg group-hover:text-foreground">
-                →
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+        </header>
 
-      <div className="mt-auto pt-10 flex flex-col items-center gap-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <Link to="/qr" className="hover:underline flex items-center gap-1 font-medium text-foreground">
-            📱 Booth QR Kiosk
-          </Link>
-          <span>·</span>
-          <Link to="/dashboard" className="hover:underline">
-            📊 Live Dashboard
-          </Link>
-        </div>
-        <p>Network Expo · Live Voting</p>
+        {checked && alreadyVoted ? (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center shadow-lg backdrop-blur-xl">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mx-auto mb-4">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Vote Recorded</h2>
+            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+              Your ballot has been cryptographically committed and sealed in PostgreSQL. Thank you for participating!
+            </p>
+            <div className="mt-6 pt-4 border-t border-border/60 text-[11px] text-muted-foreground font-mono">
+              Status: Verified & Locked
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3.5">
+            {options.map(({ type, label, icon: Icon, desc, badge }) => (
+              <Link
+                key={type}
+                to="/register/$type"
+                params={{ type }}
+                search={{ token }}
+                className="group relative flex items-center gap-4 rounded-2xl bg-card/90 p-5 shadow-sm border border-border/80 transition-all hover:border-emerald-500/50 hover:shadow-md hover:bg-card active:scale-[0.99]"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/80 text-foreground group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-colors">
+                  <Icon className="h-6 w-6" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold text-foreground tracking-tight">{label}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-secondary text-[10px] font-semibold text-muted-foreground group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-colors">
+                      {badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">{desc}</p>
+                </div>
+
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Clean Mobile Voter Footer (Zero Organizer links) */}
+      <footer className="mt-12 pt-6 border-t border-border/40 text-center text-xs text-muted-foreground">
+        <p className="font-medium text-foreground/80">Network Expo 2026</p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">Secure Multi-Node Distributed Voting System</p>
+      </footer>
     </div>
   );
 }

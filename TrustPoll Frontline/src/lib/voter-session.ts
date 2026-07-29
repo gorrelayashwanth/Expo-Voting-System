@@ -10,7 +10,6 @@ export interface VoterSession {
   token?: string;
 }
 
-
 export function saveVoter(v: VoterSession) {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(KEY, JSON.stringify(v));
@@ -26,6 +25,8 @@ export function loadVoter(): VoterSession | null {
     return null;
   }
 }
+
+export const getVoter = loadVoter;
 
 export function clearVoter() {
   if (typeof window === "undefined") return;

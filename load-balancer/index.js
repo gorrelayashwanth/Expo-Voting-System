@@ -241,12 +241,7 @@ app.post('/api/register-voter', async (req, res) => {
             return res.status(400).json({ error: 'voter_type, name, and identifier are required.' });
         }
 
-        // Check if cookie indicates already voted
-        if (req.cookies && req.cookies.trustpoll_voted === 'true') {
-            return res.status(400).json({ error: 'You have already voted.' });
-        }
-
-        // Check if device fingerprint has already voted
+        // Check if device fingerprint has already voted in DB
         const existingFingerprintVoter = await prisma.voters.findFirst({
             where: {
                 device_fingerprint,

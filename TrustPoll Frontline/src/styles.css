@@ -109,4 +109,20 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+  .input-style {
+    height: 2.75rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .input-style:focus {
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
 }
