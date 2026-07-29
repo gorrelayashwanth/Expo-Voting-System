@@ -45,12 +45,16 @@ export async function apiFetch<T>(path: string, opts: Options = {}): Promise<T> 
     "Content-Type": "application/json",
     Accept: "application/json",
   };
-  if (includeFingerprint) {
-    let fp = getDeviceFingerprint();
-    if (!fp && typeof window !== "undefined") {
+  let fp = getDeviceFingerprint();
+  if (!fp && typeof window !== "undefined") {
+    try {
       const { initDeviceFingerprint } = await import("./fingerprint");
       fp = await initDeviceFingerprint();
+    } catch {
+      /* fallback */
     }
+  }
+  if (fp) {
     headers["X-Device-Fingerprint"] = fp;
   }
 

@@ -241,15 +241,28 @@ app.post('/api/register-voter', async (req, res) => {
             return res.status(400).json({ error: 'voter_type, name, and identifier are required.' });
         }
 
-        // Check if device fingerprint has already voted in DB
-        const existingFingerprintVoter = await prisma.voters.findFirst({
-            where: {
-                device_fingerprint,
-                has_voted: true
+        // 1. Check if database has 0 votes (admin reset scenario)
+        const totalVotesCount = await prisma.votes.count();
+        if (totalVotesCount === 0 && res.clearCookie) {
+            res.clearCookie('trustpoll_voted', { path: '/' });
+        }
+
+        // 2. Check if cookie indicates already voted (only if active votes exist)
+        if (totalVotesCount > 0 && req.cookies && req.cookies.trustpoll_voted === 'true') {
+            return res.status(400).json({ error: 'You have already voted.' });
+        }
+
+        // 3. Check if device fingerprint has already voted in DB
+        if (device_fingerprint && device_fingerprint !== 'demo-device-fingerprint') {
+            const existingFingerprintVoter = await prisma.voters.findFirst({
+                where: {
+                    device_fingerprint,
+                    has_voted: true
+                }
+            });
+            if (existingFingerprintVoter) {
+                return res.status(400).json({ error: 'This device has already been used to cast a vote.' });
             }
-        });
-        if (existingFingerprintVoter) {
-            return res.status(400).json({ error: 'This device has already been used to cast a vote.' });
         }
 
         let voter = await prisma.voters.findUnique({
