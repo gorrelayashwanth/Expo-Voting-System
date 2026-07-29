@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api";
-import { QrCode, ExternalLink, ShieldCheck, Copy, Check } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/qr")({
   head: () => ({
@@ -25,19 +25,12 @@ function QRKioskPage() {
   }
 
   const [targetUrl, setTargetUrl] = useState(getQrTargetUrl);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setTargetUrl(getQrTargetUrl());
   }, []);
 
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(targetUrl)}`;
-
-  function copyUrl() {
-    navigator.clipboard.writeText(targetUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8 text-foreground font-sans antialiased">
@@ -64,33 +57,9 @@ function QRKioskPage() {
           />
         </div>
 
-        <div className="mt-5 flex items-center gap-2 text-xs font-medium text-emerald-400">
+        <div className="mt-6 flex items-center gap-2 text-xs font-medium text-emerald-400">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
           <span>Live 3-Minute Expiry Token Generator</span>
-        </div>
-
-        {/* Editable Target URL */}
-        <div className="mt-6 w-full text-left space-y-1.5">
-          <label htmlFor="target-url" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Target Endpoint URL
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="target-url"
-              type="text"
-              value={targetUrl}
-              onChange={(e) => setTargetUrl(e.target.value)}
-              className="h-10 flex-1 rounded-xl border border-border bg-background px-3.5 text-xs font-mono outline-none focus:border-emerald-500/50 transition-colors"
-            />
-            <button
-              type="button"
-              onClick={copyUrl}
-              className="h-10 px-3.5 rounded-xl border border-border bg-secondary text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1.5"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
         </div>
 
         {/* Organizer Footer Bar */}
@@ -98,14 +67,6 @@ function QRKioskPage() {
           <Link to="/" className="hover:text-foreground transition-colors">
             ← Home
           </Link>
-          <a
-            href={targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-emerald-400 transition-colors"
-          >
-            Direct Link <ExternalLink className="h-3 w-3" />
-          </a>
           <Link to="/dashboard" className="hover:text-foreground transition-colors">
             Dashboard →
           </Link>

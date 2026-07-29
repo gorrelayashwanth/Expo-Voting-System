@@ -173,7 +173,7 @@ function RegisterPage() {
               id="name"
               type="text"
               autoComplete="name"
-              placeholder="e.g. Yashwanth Gorrela"
+              placeholder="e.g. Alex Morgan"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input-style"
