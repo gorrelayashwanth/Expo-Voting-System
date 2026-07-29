@@ -193,4 +193,29 @@ export const api = {
       body: { question },
       signal,
     }),
+
+  // Admin Panel APIs
+  adminResetVotes: () =>
+    apiFetch<{ success: boolean; message: string }>("/api/admin/reset-votes", {
+      method: "POST",
+    }),
+  adminCreateProject: (payload: { project_number: number; title: string; team_name?: string }) =>
+    apiFetch<{ success: boolean; project: Project }>("/api/admin/projects", {
+      method: "POST",
+      body: payload,
+    }),
+  adminEditProject: (id: string, payload: { project_number?: number; title?: string; team_name?: string }) =>
+    apiFetch<{ success: boolean; project: Project }>(`/api/admin/projects/${id}`, {
+      method: "PUT",
+      body: payload,
+    }),
+  adminDeleteProject: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/admin/projects/${id}`, {
+      method: "DELETE",
+    }),
+  adminSeedProjects: (projects: Array<{ project_number: number; title: string; team_name?: string }>) =>
+    apiFetch<{ success: boolean; count: number; projects: Project[] }>("/api/admin/seed-projects", {
+      method: "POST",
+      body: { projects },
+    }),
 };

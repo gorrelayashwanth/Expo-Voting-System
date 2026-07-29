@@ -516,6 +516,111 @@ app.post('/api/chatbot-query', async (req, res) => {
     }
 });
 
+// --------------- ADMIN MANAGEMENT ENDPOINTS ---------------
+
+// 1. Reset all voting data (Votes, Voters, VoteTokens) for clean trial runs
+app.post('/api/admin/reset-votes', async (req, res) => {
+    try {
+        await prisma.votes.deleteMany({});
+        await prisma.voters.deleteMany({});
+        await prisma.voteTokens.deleteMany({});
+        voteTimestamps = [];
+        console.log('[Admin] Cleared all votes, voters, and tokens.');
+        return res.json({ success: true, message: 'All votes and voter data cleared successfully.' });
+    } catch (error) {
+        console.error("Error resetting votes:", error);
+        return res.status(500).json({ error: error.message || "Failed to reset voting data." });
+    }
+});
+
+// 2. Add a new project
+app.post('/api/admin/projects', async (req, res) => {
+    try {
+        const { project_number, title, team_name } = req.body;
+        if (!project_number || !title) {
+            return res.status(400).json({ error: "project_number and title are required." });
+        }
+        const project = await prisma.projects.create({
+            data: {
+                project_number: parseInt(project_number, 10),
+                title: title.trim(),
+                team_name: team_name ? team_name.trim() : null
+            }
+        });
+        console.log(`[Admin] Added project #${project.project_number}: ${project.title}`);
+        return res.json({ success: true, project });
+    } catch (error) {
+        console.error("Error creating project:", error);
+        return res.status(500).json({ error: error.message || "Failed to create project." });
+    }
+});
+
+// 3. Edit an existing project
+app.put('/api/admin/projects/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { project_number, title, team_name } = req.body;
+        const updated = await prisma.projects.update({
+            where: { id },
+            data: {
+                project_number: project_number ? parseInt(project_number, 10) : undefined,
+                title: title ? title.trim() : undefined,
+                team_name: team_name !== undefined ? (team_name ? team_name.trim() : null) : undefined
+            }
+        });
+        console.log(`[Admin] Updated project #${updated.project_number}`);
+        return res.json({ success: true, project: updated });
+    } catch (error) {
+        console.error("Error updating project:", error);
+        return res.status(500).json({ error: error.message || "Failed to update project." });
+    }
+});
+
+// 4. Delete a project
+app.delete('/api/admin/projects/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.projects.delete({ where: { id } });
+        console.log(`[Admin] Deleted project ID: ${id}`);
+        return res.json({ success: true, message: "Project deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        return res.status(500).json({ error: error.message || "Failed to delete project." });
+    }
+});
+
+// 5. Bulk upload / seed projects dataset
+app.post('/api/admin/seed-projects', async (req, res) => {
+    try {
+        const { projects } = req.body; // array of { project_number, title, team_name }
+        if (!Array.isArray(projects) || projects.length === 0) {
+            return res.status(400).json({ error: "projects array is required." });
+        }
+
+        // Clear existing votes and projects safely
+        await prisma.votes.deleteMany({});
+        await prisma.projects.deleteMany({});
+
+        const created = [];
+        for (const p of projects) {
+            const newProj = await prisma.projects.create({
+                data: {
+                    project_number: parseInt(p.project_number, 10),
+                    title: p.title.trim(),
+                    team_name: p.team_name ? p.team_name.trim() : null
+                }
+            });
+            created.push(newProj);
+        }
+
+        console.log(`[Admin] Bulk seeded ${created.length} projects.`);
+        return res.json({ success: true, count: created.length, projects: created });
+    } catch (error) {
+        console.error("Error bulk seeding projects:", error);
+        return res.status(500).json({ error: error.message || "Failed to seed projects dataset." });
+    }
+});
+
 const autoMigrateLB = async () => {
     try {
         const ddl = `
