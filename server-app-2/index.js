@@ -19,7 +19,10 @@ if (!connectionString) {
 const isRender = connectionString.includes('render.com') || process.env.NODE_ENV === 'production';
 const pool = new Pool({
   connectionString,
-  ssl: isRender ? { rejectUnauthorized: false } : false
+  ssl: isRender ? { rejectUnauthorized: false } : false,
+  max: 15,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
@@ -56,37 +59,43 @@ app.post("/process-vote", async (req, res) => {
 
   try {
     // Write a new row to the Votes table and mark Voter as having voted in a transaction
-    await prisma.$transaction(async (tx) => {
-      // 1. Double check if voter has already voted (safety net)
-      const voter = await tx.voters.findUnique({
-        where: { id: voter_id },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        // 1. Double check if voter has already voted (safety net)
+        const voter = await tx.voters.findUnique({
+          where: { id: voter_id },
+        });
 
-      if (!voter) {
-        throw new Error("Voter not found.");
+        if (!voter) {
+          throw new Error("Voter not found.");
+        }
+
+        if (voter.has_voted) {
+          throw new Error("Voter has already voted.");
+        }
+
+        // 2. Create the Vote record
+        const duration = Date.now() - start;
+        await tx.votes.create({
+          data: {
+            voter_id,
+            project_id,
+            handled_by_server: serverId,
+            response_time_ms: duration,
+          },
+        });
+
+        // 3. Mark Voter as voted
+        await tx.voters.update({
+          where: { id: voter_id },
+          data: { has_voted: true },
+        });
+      },
+      {
+        maxWait: 15000,
+        timeout: 20000,
       }
-
-      if (voter.has_voted) {
-        throw new Error("Voter has already voted.");
-      }
-
-      // 2. Create the Vote record
-      const duration = Date.now() - start;
-      await tx.votes.create({
-        data: {
-          voter_id,
-          project_id,
-          handled_by_server: serverId,
-          response_time_ms: duration,
-        },
-      });
-
-      // 3. Mark Voter as voted
-      await tx.voters.update({
-        where: { id: voter_id },
-        data: { has_voted: true },
-      });
-    });
+    );
 
     const duration = Date.now() - start;
     return res.json({

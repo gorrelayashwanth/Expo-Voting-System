@@ -16,6 +16,8 @@ export const Route = createFileRoute("/projects")({
 });
 
 function friendlyError(raw: string): string {
+  if (raw.includes("Transaction API error") || raw.includes("Unable to start a transaction"))
+    return "Database connection timed out while processing your vote. Please tap 'Submit Vote' again.";
   if (raw.includes("All backend servers are down"))
     return "All voting servers are currently down. Please try again in a moment.";
   if (raw.includes("All backend servers failed"))
