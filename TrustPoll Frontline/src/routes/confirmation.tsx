@@ -29,17 +29,18 @@ function ConfirmationPage() {
   useEffect(() => {
     setVotedCookie();
 
-    const url = `${window.location.pathname}${window.location.search}`;
-    window.history.pushState({ trustpollConfirmation: true }, "", url);
+    // Trap back button to prevent navigating back to ballot form / projects page
+    window.history.pushState(null, "", window.location.href);
 
-    const onPopState = () => {
-      window.history.pushState({ trustpollConfirmation: true }, "", url);
-      navigate({ to: "/confirmation", search: { server: assignedServer }, replace: true });
+    const onPopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      // Redirect directly to home landing page (which shows "Already Voted" status)
+      navigate({ to: "/", replace: true });
     };
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [navigate, assignedServer]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between px-5 py-8 max-w-md mx-auto w-full font-sans antialiased text-center">
