@@ -598,7 +598,7 @@ app.delete('/api/admin/projects/:id', async (req, res) => {
     }
 });
 
-// 5. Bulk upload / seed projects dataset
+// 5. Bulk upload / seed projects dataset safely (upsert without deleting votes)
 app.post('/api/admin/seed-projects', async (req, res) => {
     try {
         const { projects } = req.body; // array of { project_number, title, team_name }
@@ -606,26 +606,38 @@ app.post('/api/admin/seed-projects', async (req, res) => {
             return res.status(400).json({ error: "projects array is required." });
         }
 
-        // Clear existing votes and projects safely
-        await prisma.votes.deleteMany({});
-        await prisma.projects.deleteMany({});
-
         const created = [];
         for (const p of projects) {
-            const newProj = await prisma.projects.create({
-                data: {
-                    project_number: parseInt(p.project_number, 10),
-                    title: p.title.trim(),
-                    team_name: p.team_name ? p.team_name.trim() : null
-                }
+            const pNum = parseInt(p.project_number, 10);
+            const existing = await prisma.projects.findFirst({
+                where: { project_number: pNum }
             });
-            created.push(newProj);
+
+            if (existing) {
+                const updated = await prisma.projects.update({
+                    where: { id: existing.id },
+                    data: {
+                        title: p.title.trim(),
+                        team_name: p.team_name ? p.team_name.trim() : null
+                    }
+                });
+                created.push(updated);
+            } else {
+                const newProj = await prisma.projects.create({
+                    data: {
+                        project_number: pNum,
+                        title: p.title.trim(),
+                        team_name: p.team_name ? p.team_name.trim() : null
+                    }
+                });
+                created.push(newProj);
+            }
         }
 
-        console.log(`[Admin] Bulk seeded ${created.length} projects.`);
+        console.log(`[Admin] Seeded/updated ${created.length} projects safely without clearing votes.`);
         return res.json({ success: true, count: created.length, projects: created });
     } catch (error) {
-        console.error("Error bulk seeding projects:", error);
+        console.error("Error seeding projects:", error);
         return res.status(500).json({ error: error.message || "Failed to seed projects dataset." });
     }
 });
