@@ -21,6 +21,8 @@ import {
   Fingerprint,
   ScanFace,
   KeyRound,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -65,6 +67,13 @@ function AdminPage() {
   const [resetting, setResetting] = useState(false);
   const [waking, setWaking] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // CSV Dataset Seeder State
+  const [csvText, setCsvText] = useState("");
+  const [csvParsed, setCsvParsed] = useState<Array<{ project_number: number; title: string; team_name?: string }>>([]);
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const [clearBeforeSeed, setClearBeforeSeed] = useState(false);
+  const [seedingCsv, setSeedingCsv] = useState(false);
 
   // Check session unlock on mount
   useEffect(() => {
@@ -214,7 +223,7 @@ function AdminPage() {
     setExporting(true);
     try {
       const summary = await api.dashboardSummary();
-      let csvContent = "data:text/csv;charset=utf-8,Project ID,Project Title,Team Lead Name,Votes Count\n";
+      let csvContent = "data:text/csv;charset=utf-8,Team No.,Project Title,Team Lead Name,Votes Count\n";
       summary.projectVotes.forEach((p) => {
         csvContent += `"${p.project_number}","${p.title}","${p.team_name || ''}",${p.votes}\n`;
       });
@@ -283,7 +292,7 @@ function AdminPage() {
           <table>
             <thead>
               <tr>
-                <th>Project ID</th>
+                <th>Team No.</th>
                 <th>Project Title</th>
                 <th>Team Lead Name</th>
                 <th style="text-align:right;">Total Votes</th>
@@ -316,7 +325,7 @@ function AdminPage() {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projNum || !title.trim()) {
-      showMsg("error", "Project ID and Title are required.");
+      showMsg("error", "Team No. and Title are required.");
       return;
     }
     setAdding(true);
@@ -326,7 +335,7 @@ function AdminPage() {
         title: title.trim(),
         team_name: teamName.trim() || undefined,
       });
-      showMsg("success", `Project #${projNum} added successfully.`);
+      showMsg("success", `Team #${projNum} added successfully.`);
       setProjNum("");
       setTitle("");
       setTeamName("");
@@ -339,10 +348,10 @@ function AdminPage() {
   };
 
   const handleDeleteProject = async (id: string, num: number) => {
-    if (!confirm(`Are you sure you want to delete Project #${num}?`)) return;
+    if (!confirm(`Are you sure you want to delete Team #${num}?`)) return;
     try {
       await api.adminDeleteProject(id);
-      showMsg("success", `Project #${num} deleted.`);
+      showMsg("success", `Team #${num} deleted.`);
       fetchProjects();
     } catch (e: any) {
       showMsg("error", e.message || "Failed to delete project.");
@@ -358,7 +367,7 @@ function AdminPage() {
 
   const handleSaveEdit = async (id: string) => {
     if (!editNum || !editTitle.trim()) {
-      showMsg("error", "Project ID and Title are required.");
+      showMsg("error", "Team No. and Title are required.");
       return;
     }
     setSavingId(id);
@@ -382,9 +391,9 @@ function AdminPage() {
     if (!confirm("Seed default 3 Expo Projects? This will replace current projects.")) return;
     try {
       await api.adminSeedProjects([
-        { project_number: 101, title: "AI-Powered Ballot Counter", team_name: "ByteBenders" },
-        { project_number: 102, title: "Secure Blockchain Voting", team_name: "Decentralizers" },
-        { project_number: 103, title: "Biometric Voter Authentication", team_name: "BioLock" },
+        { project_number: 1, title: "Expo Project Alpha", team_name: "Team 1" },
+        { project_number: 2, title: "Expo Project Beta", team_name: "Team 2" },
+        { project_number: 3, title: "Expo Project Gamma", team_name: "Team 3" },
       ]);
       showMsg("success", "Default projects dataset seeded!");
       fetchProjects();
@@ -392,6 +401,212 @@ function AdminPage() {
       showMsg("error", e.message || "Failed to seed default projects.");
     }
   };
+
+  // ----- UNIVERSAL DOCUMENT & DATASET PARSING HELPERS -----
+  function parseDocumentString(raw: string, filename?: string) {
+    setCsvText(raw);
+    setCsvError(null);
+    if (!raw.trim()) {
+      setCsvParsed([]);
+      return;
+    }
+
+    // 1. Try JSON document parsing
+    if (raw.trim().startsWith("[") || raw.trim().startsWith("{") || filename?.toLowerCase().endsWith(".json")) {
+      try {
+        const json = JSON.parse(raw);
+        const arr = Array.isArray(json) ? json : json.projects || json.teams || [json];
+        const parsed: Array<{ project_number: number; title: string; team_name?: string }> = [];
+
+        for (const item of arr) {
+          const num = parseInt(
+            item.project_number ?? item.team_no ?? item.team_number ?? item.id ?? item.number ?? item.no ?? "",
+            10
+          );
+          const title = (item.title ?? item.project_title ?? item.name ?? item.project ?? "").toString().trim();
+          const team = (item.team_name ?? item.team_lead ?? item.lead ?? item.author ?? "").toString().trim();
+
+          if (!isNaN(num) && title) {
+            parsed.push({
+              project_number: num,
+              title: title,
+              team_name: team || undefined,
+            });
+          }
+        }
+
+        if (parsed.length > 0) {
+          setCsvParsed(parsed);
+          setCsvError(null);
+          return;
+        }
+      } catch (e) {
+        // Fall back to text/delimiter line parsing if JSON parse fails
+      }
+    }
+
+    // 2. Delimited or Line-by-Line Document Parser (.csv, .tsv, .txt, .tab, etc.)
+    try {
+      const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        setCsvParsed([]);
+        return;
+      }
+
+      // Detect delimiter (Comma, Tab, Pipe, Semicolon)
+      const sample = lines.slice(0, 5).join("\n");
+      let delimiter = ",";
+      if (sample.includes("\t")) delimiter = "\t";
+      else if (sample.includes("|")) delimiter = "|";
+      else if (sample.includes(";")) delimiter = ";";
+
+      const splitRow = (line: string) => {
+        if (delimiter === "\t" || delimiter === "|" || delimiter === ";") {
+          return line.split(delimiter).map((s) => s.trim().replace(/^["']|["']$/g, ""));
+        }
+        const result: string[] = [];
+        let current = "";
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"' || char === "'") {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            result.push(current.trim().replace(/^["']|["']$/g, ""));
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim().replace(/^["']|["']$/g, ""));
+        return result;
+      };
+
+      const firstRow = splitRow(lines[0]);
+      let startIdx = 0;
+      let teamNumIdx = 0;
+      let titleIdx = 1;
+      let teamNameIdx = 2;
+
+      const h0 = firstRow[0]?.toLowerCase() || "";
+      const h1 = firstRow[1]?.toLowerCase() || "";
+      const h2 = firstRow[2]?.toLowerCase() || "";
+      const isHeader =
+        h0.includes("team") || h0.includes("project") || h0.includes("id") || h0.includes("no") ||
+        h1.includes("title") || h1.includes("name") || h2.includes("lead") || h2.includes("author");
+
+      if (isHeader) {
+        startIdx = 1;
+        firstRow.forEach((col, idx) => {
+          const c = col.toLowerCase();
+          if (c.includes("no") || c.includes("num") || c.includes("id")) teamNumIdx = idx;
+          else if (c.includes("title") || c.includes("project")) titleIdx = idx;
+          else if (c.includes("lead") || c.includes("team") || c.includes("author") || c.includes("name")) teamNameIdx = idx;
+        });
+      }
+
+      const parsed: Array<{ project_number: number; title: string; team_name?: string }> = [];
+      const invalidRows: number[] = [];
+
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i];
+        const row = splitRow(line);
+
+        let numVal = parseInt(row[teamNumIdx] !== undefined ? row[teamNumIdx] : row[0] || "", 10);
+        let titleVal = (row[titleIdx] !== undefined ? row[titleIdx] : row[1] || "").trim();
+        let teamNameVal = (row[teamNameIdx] !== undefined ? row[teamNameIdx] : row[2] || "").trim();
+
+        // Freeform document line regex fallback (e.g. "1 - Smart Agriculture - Priya" or "Team 2: Autonomous Drone (Rahul)")
+        if (isNaN(numVal) || !titleVal) {
+          const match = line.match(/^(?:team\s*)?#?(\d+)[\.\s:|-]+([^\-|:|(|,]+)(?:[\-:(|,]\s*(.+))?$/i);
+          if (match) {
+            numVal = parseInt(match[1], 10);
+            titleVal = match[2].trim();
+            teamNameVal = (match[3] || "").replace(/[\(\)]/g, "").trim();
+          }
+        }
+
+        if (!isNaN(numVal) && titleVal) {
+          parsed.push({
+            project_number: numVal,
+            title: titleVal,
+            team_name: teamNameVal || undefined,
+          });
+        } else {
+          invalidRows.push(i + 1);
+        }
+      }
+
+      if (parsed.length === 0) {
+        setCsvError("Could not parse project dataset from document. Ensure document contains Team No and Title.");
+      } else if (invalidRows.length > 0) {
+        setCsvError(`Extracted ${parsed.length} projects. Skipped ${invalidRows.length} unparseable line(s).`);
+      }
+      setCsvParsed(parsed);
+    } catch (e: any) {
+      setCsvError("Error parsing document content: " + (e.message || String(e)));
+      setCsvParsed([]);
+    }
+  }
+
+  function handleDocumentFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) parseDocumentString(content, file.name);
+    };
+    reader.readAsText(file);
+  }
+
+  function downloadCsvTemplate() {
+    const sampleCsv = `Team No,Project Title,Team Lead Name
+1,Smart IoT Agriculture Analyzer,Priya Sharma
+2,Autonomous Drone Navigation System,Rahul Verma
+3,Blockchain Verified Health Records,Ananya Patel
+4,AI Medical Diagnostic Assistant,Rohan Gupta`;
+    const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "expo_projects_template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadTxtTemplate() {
+    const sampleTxt = `1 - Smart IoT Agriculture Analyzer - Priya Sharma
+2 - Autonomous Drone Navigation System - Rahul Verma
+3 - Blockchain Verified Health Records - Ananya Patel
+4 - AI Medical Diagnostic Assistant - Rohan Gupta`;
+    const blob = new Blob([sampleTxt], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "expo_projects_list.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleBulkSeedCsv() {
+    if (csvParsed.length === 0) {
+      showMsg("error", "No valid project dataset found in document.");
+      return;
+    }
+    setSeedingCsv(true);
+    try {
+      const res = await api.adminSeedProjects(csvParsed, clearBeforeSeed);
+      showMsg("success", `Successfully imported & seeded ${res.count || csvParsed.length} projects directly into PostgreSQL!`);
+      setCsvText("");
+      setCsvParsed([]);
+      fetchProjects();
+    } catch (e: any) {
+      showMsg("error", e.message || "Failed to bulk seed document dataset.");
+    } finally {
+      setSeedingCsv(false);
+    }
+  }
 
   // ----- BIOMETRIC & PIN AUTHENTICATION GATE -----
   if (!isAuthenticated) {
@@ -577,9 +792,9 @@ function AdminPage() {
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">
               <Database className="h-4 w-4" /> Preset Dataset
             </div>
-            <h2 className="text-base font-bold">Seed Default Projects</h2>
+            <h2 className="text-base font-bold">Seed Generic Demo Projects</h2>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Populates default Network Expo projects (#101 AI Ballot, #102 Blockchain, #103 Biometric).
+              Populates default Expo projects (Team #1, Team #2, Team #3).
             </p>
           </div>
 
@@ -588,9 +803,135 @@ function AdminPage() {
             onClick={handleSeedDefaults}
             className="mt-6 h-10 w-full rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors"
           >
-            🌱 Seed Default 3 Projects
+            🌱 Seed 3 Demo Projects
           </button>
         </div>
+      </div>
+
+      {/* Universal Document & Dataset Importer */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-card p-6 mb-8 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
+              <FileSpreadsheet className="h-4 w-4" /> Bulk Dataset Seeder
+            </div>
+            <h2 className="text-lg font-bold tracking-tight">Universal Document Dataset Importer</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Upload ANY document (.csv, .txt, .json, .tsv) or paste text content to seed your Expo projects directly into PostgreSQL.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={downloadCsvTemplate}
+              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
+            >
+              <Download className="h-3.5 w-3.5" /> CSV Template
+            </button>
+            <button
+              type="button"
+              onClick={downloadTxtTemplate}
+              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
+            >
+              <Download className="h-3.5 w-3.5" /> TXT Template
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* File Upload Zone */}
+          <div className="rounded-xl border border-dashed border-border bg-background/50 p-4 flex flex-col items-center justify-center text-center">
+            <Upload className="h-6 w-6 text-emerald-400 mb-2" />
+            <p className="text-xs font-semibold mb-1">Upload Document File</p>
+            <p className="text-[11px] text-muted-foreground mb-3">Supports .CSV, .TXT, .JSON, .TSV documents</p>
+            <label className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all">
+              Choose Document File
+              <input
+                type="file"
+                accept=".csv,.tsv,.txt,.json,.tab,.dat,text/plain,application/json,text/csv"
+                onChange={handleDocumentFileUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* Raw Text Paste Box */}
+          <div className="flex flex-col">
+            <label className="text-xs font-semibold text-muted-foreground mb-1">Or Paste Document / Text Content Directly:</label>
+            <textarea
+              rows={4}
+              placeholder="Team No, Project Title, Team Lead&#10;1, Smart IoT Meter, Alex Vance&#10;OR: 1 - Autonomous Drone - Priya Sharma&#10;OR JSON array"
+              value={csvText}
+              onChange={(e) => parseDocumentString(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background p-3 text-xs font-mono outline-none focus:border-foreground/40 transition-colors resize-none"
+            />
+          </div>
+        </div>
+
+        {/* CSV Parse Warning / Info */}
+        {csvError && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400 font-medium">
+            {csvError}
+          </div>
+        )}
+
+        {/* CSV Preview Table & Execution */}
+        {csvParsed.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/80 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Detected
+              </span>
+
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={clearBeforeSeed}
+                  onChange={(e) => setClearBeforeSeed(e.target.checked)}
+                  className="rounded border-border"
+                />
+                Clear un-voted dataset before import (Replace all)
+              </label>
+            </div>
+
+            {/* Preview snippet table */}
+            <div className="rounded-xl border border-border bg-background/80 overflow-hidden text-xs">
+              <div className="bg-secondary/60 px-4 py-2 border-b border-border font-semibold flex justify-between text-muted-foreground text-[11px] uppercase tracking-wider">
+                <span>Preview (First {Math.min(5, csvParsed.length)} of {csvParsed.length})</span>
+                <span>Team Lead</span>
+              </div>
+              <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
+                {csvParsed.slice(0, 10).map((p, i) => (
+                  <div key={i} className="px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-bold text-emerald-400">Team #{p.project_number}</span>
+                      <span className="font-semibold text-foreground truncate max-w-xs">{p.title}</span>
+                    </div>
+                    <span className="text-muted-foreground text-[11px]">{p.team_name || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleBulkSeedCsv}
+              disabled={seedingCsv}
+              className="h-11 w-full rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+            >
+              {seedingCsv ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Importing & Seeding Dataset to Database...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" /> 🚀 Bulk Seed {csvParsed.length} Projects to Database
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add New Project Form */}
@@ -602,7 +943,7 @@ function AdminPage() {
         <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             type="number"
-            placeholder="Project ID (e.g. 104)"
+            placeholder="Team No. (e.g. 1)"
             value={projNum}
             onChange={(e) => setProjNum(e.target.value)}
             className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
@@ -672,7 +1013,7 @@ function AdminPage() {
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <input
                         type="number"
-                        placeholder="Project ID"
+                        placeholder="Team No."
                         value={editNum}
                         onChange={(e) => setEditNum(e.target.value)}
                         className="h-9 px-2.5 rounded-lg border border-border bg-card"
@@ -721,8 +1062,8 @@ function AdminPage() {
                   className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
-                      #{p.project_number}
+                    <span className="flex h-9 px-2.5 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
+                      Team #{p.project_number}
                     </span>
                     <div>
                       <div className="font-bold text-sm">{p.title}</div>

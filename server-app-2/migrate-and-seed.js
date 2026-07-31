@@ -96,9 +96,9 @@ async function run() {
       console.log("Seeding sample Projects...");
       await client.query(`
         INSERT INTO "Projects" (project_number, title, team_name) VALUES
-        (101, 'AI-Powered Ballot Counter', 'ByteBenders'),
-        (102, 'Secure Blockchain Voting', 'Decentralizers'),
-        (103, 'Biometric Voter Authentication', 'BioLock')
+        (1, 'Expo Project Alpha', 'Team 1'),
+        (2, 'Expo Project Beta', 'Team 2'),
+        (3, 'Expo Project Gamma', 'Team 3')
       `);
       console.log("Seeding Projects completed.");
     } else {

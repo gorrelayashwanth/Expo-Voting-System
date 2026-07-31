@@ -218,9 +218,12 @@ export const api = {
     apiFetch<{ success: boolean; message: string }>(`/api/admin/projects/${id}`, {
       method: "DELETE",
     }),
-  adminSeedProjects: (projects: Array<{ project_number: number; title: string; team_name?: string }>) =>
+  adminSeedProjects: (
+    projects: Array<{ project_number: number; title: string; team_name?: string }>,
+    clear_existing?: boolean
+  ) =>
     apiFetch<{ success: boolean; count: number; projects: Project[] }>("/api/admin/seed-projects", {
       method: "POST",
-      body: { projects },
+      body: { projects, clear_existing },
     }),
 };

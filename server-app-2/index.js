@@ -5,6 +5,17 @@ const { PrismaPg } = require("@prisma/adapter-pg");
 const { Pool } = require("pg");
 
 const app = express();
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Device-Fingerprint');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Device-Fingerprint');
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Max-Age', '86400');
+    return res.status(204).end();
+  }
+  next();
+});
 app.use(express.json());
 
 const port = process.env.PORT || 5001;
@@ -129,9 +140,9 @@ const autoMigrate = async () => {
     if (parseInt(projCheck.rows[0].count, 10) === 0) {
       await pool.query(`
         INSERT INTO "Projects" (project_number, title, team_name) VALUES
-        (101, 'AI-Powered Ballot Counter', 'ByteBenders'),
-        (102, 'Secure Blockchain Voting', 'Decentralizers'),
-        (103, 'Biometric Voter Authentication', 'BioLock')
+        (1, 'Expo Project Alpha', 'Team 1'),
+        (2, 'Expo Project Beta', 'Team 2'),
+        (3, 'Expo Project Gamma', 'Team 3')
       `);
       console.log(`[${serverId}] Auto-seeded default projects.`);
     }
@@ -277,7 +288,7 @@ app.get("/", (req, res) => {
             <div class="vote-item">
               <div>
                 <div class="voter-info">⚡ \${voterName} <span style="font-size:0.75rem; font-weight:400; color:#a1a1aa;">(\${voterType})</span></div>
-                <div class="project-info">Project #\${projNum}: \${projTitle}</div>
+                <div class="project-info">Team #\${projNum}: \${projTitle}</div>
               </div>
               <div class="vote-meta">
                 <span class="latency-tag">\${v.response_time_ms}ms</span>

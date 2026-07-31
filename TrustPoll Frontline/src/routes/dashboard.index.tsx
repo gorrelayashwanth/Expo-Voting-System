@@ -220,7 +220,7 @@ function ProjectVotesChart({
             <div className="flex justify-between text-xs">
               <span className="text-foreground truncate pr-2">
                 <span className="text-muted-foreground mr-2">
-                  #{p.project_number}
+                  Team #{p.project_number}
                 </span>
                 {p.title}
               </span>

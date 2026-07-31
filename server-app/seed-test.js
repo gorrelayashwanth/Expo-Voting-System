@@ -13,7 +13,7 @@ async function main() {
     console.log("No projects found, inserting a test project...");
     await prisma.projects.create({
       data: {
-        project_number: 101,
+        project_number: 1,
         title: "Test Voting Project",
         team_name: "Alpha Team"
       }

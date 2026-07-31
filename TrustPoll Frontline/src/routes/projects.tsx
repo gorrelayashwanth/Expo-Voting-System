@@ -130,7 +130,7 @@ function ProjectsPage() {
         <div className="mb-4">
           <input
             type="search"
-            placeholder="Search by Project ID, title, or team lead..."
+            placeholder="Search by Team No., title, or team lead..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input-style text-xs"
@@ -168,10 +168,10 @@ function ProjectsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors ${
+                    <span className={`flex h-10 px-3 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors ${
                       selected ? "bg-emerald-500 text-white" : "bg-secondary text-foreground"
                     }`}>
-                      #{p.project_number}
+                      Team #{p.project_number}
                     </span>
 
                     <div className="flex-1 min-w-0">

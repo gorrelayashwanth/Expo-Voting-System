@@ -149,7 +149,16 @@ app.get('/start-vote', async (req, res) => {
             }
         });
 
-        res.redirect(`${FRONTEND_URL}/?token=${token}`);
+        let redirectTarget = FRONTEND_URL;
+        const ref = req.headers.referer || req.headers.origin;
+        if (ref && (ref.includes('pages.dev') || ref.includes('localhost') || ref.includes('onrender.com') || ref.includes('vercel.app'))) {
+            try {
+                const u = new URL(ref);
+                redirectTarget = u.origin;
+            } catch (e) {}
+        }
+
+        res.redirect(`${redirectTarget}/?token=${token}`);
     } catch (error) {
         console.error("Error creating vote token:", error);
         res.status(500).json({ error: error.message || "Internal Server Error" });
@@ -601,14 +610,27 @@ app.delete('/api/admin/projects/:id', async (req, res) => {
 // 5. Bulk upload / seed projects dataset safely (upsert without deleting votes)
 app.post('/api/admin/seed-projects', async (req, res) => {
     try {
-        const { projects } = req.body; // array of { project_number, title, team_name }
+        const { projects, clear_existing } = req.body; // array of { project_number, title, team_name }
         if (!Array.isArray(projects) || projects.length === 0) {
             return res.status(400).json({ error: "projects array is required." });
+        }
+
+        if (clear_existing) {
+            // Delete projects that don't have votes attached yet to clean slate
+            const projectsWithVotes = await prisma.votes.findMany({ select: { project_id: true } });
+            const votedProjectIds = projectsWithVotes.map(v => v.project_id);
+            await prisma.projects.deleteMany({
+                where: {
+                    id: { notIn: votedProjectIds }
+                }
+            });
         }
 
         const created = [];
         for (const p of projects) {
             const pNum = parseInt(p.project_number, 10);
+            if (isNaN(pNum)) continue;
+
             const existing = await prisma.projects.findFirst({
                 where: { project_number: pNum }
             });
@@ -634,7 +656,7 @@ app.post('/api/admin/seed-projects', async (req, res) => {
             }
         }
 
-        console.log(`[Admin] Seeded/updated ${created.length} projects safely without clearing votes.`);
+        console.log(`[Admin] Seeded/updated ${created.length} projects safely.`);
         return res.json({ success: true, count: created.length, projects: created });
     } catch (error) {
         console.error("Error seeding projects:", error);
@@ -658,9 +680,9 @@ const autoMigrateLB = async () => {
         if (parseInt(projCheck.rows[0].count, 10) === 0) {
             await pool.query(`
                 INSERT INTO "Projects" (project_number, title, team_name) VALUES
-                (101, 'AI-Powered Ballot Counter', 'ByteBenders'),
-                (102, 'Secure Blockchain Voting', 'Decentralizers'),
-                (103, 'Biometric Voter Authentication', 'BioLock')
+                (1, 'Expo Project Alpha', 'Team 1'),
+                (2, 'Expo Project Beta', 'Team 2'),
+                (3, 'Expo Project Gamma', 'Team 3')
             `);
             console.log(`[load-balancer] Auto-seeded default projects.`);
         }
