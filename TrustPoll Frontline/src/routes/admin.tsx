@@ -611,17 +611,15 @@ function AdminPage() {
   // ----- BIOMETRIC & PIN AUTHENTICATION GATE -----
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#070a11] text-slate-100 flex flex-col items-center justify-center p-5 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-        <div className="max-w-md w-full rounded-3xl border border-slate-800/90 bg-slate-900/90 backdrop-blur-2xl p-8 sm:p-10 text-center shadow-[0_0_60px_rgba(0,0,0,0.8)] transition-all relative overflow-hidden">
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto mb-6 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-            <Shield className="h-8 w-8" />
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-5 font-sans">
+        <div className="max-w-sm w-full rounded-2xl border border-border/80 bg-card/80 backdrop-blur-xl p-8 text-center shadow-2xl transition-all">
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mx-auto mb-5 shadow-inner">
+            <Shield className="h-7 w-7" />
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-white">Admin Command Vault</h1>
-          <p className="text-xs text-slate-400 mt-2 mb-6 leading-relaxed max-w-xs mx-auto">
-            Authenticate via Face ID / Touch ID or enter organizer passcode to access cluster controls.
+          <h1 className="text-xl font-bold tracking-tight">Admin Passcode & Biometrics</h1>
+          <p className="text-xs text-muted-foreground mt-1.5 mb-6 leading-relaxed">
+            Authenticate via Face ID / Touch ID or enter your organizer passcode to unlock controls.
           </p>
 
           {/* Biometric Scan Quick Action Button */}
@@ -629,7 +627,7 @@ function AdminPage() {
             type="button"
             onClick={handleBiometricAuth}
             disabled={biometricScanning}
-            className="mb-5 h-12 w-full rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+            className="mb-5 h-12 w-full rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold text-xs hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             {biometricScanning ? (
               <>
@@ -642,24 +640,24 @@ function AdminPage() {
             )}
           </button>
 
-          <div className="relative my-5 text-[10px] text-slate-500 uppercase tracking-widest flex items-center gap-2 before:h-px before:flex-1 before:bg-slate-800 after:h-px after:flex-1 after:bg-slate-800 font-semibold">
+          <div className="relative my-4 text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-2 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
             or enter passcode
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter Organizer Passcode"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-800 bg-slate-950/80 px-4 text-center text-sm font-semibold tracking-widest text-slate-100 outline-none focus:border-emerald-500/60 transition-colors shadow-inner"
+                className="h-11 w-full rounded-xl border border-border bg-background/60 px-4 text-center text-sm font-semibold tracking-wider outline-none focus:border-foreground/40 transition-colors"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-200 transition-colors"
+                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                 title={showPassword ? "Hide Passcode" : "Show Passcode"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -667,14 +665,14 @@ function AdminPage() {
             </div>
 
             {pinError && (
-              <div className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 font-semibold">
+              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 font-medium">
                 {pinError}
               </div>
             )}
 
             <button
               type="submit"
-              className="h-12 w-full rounded-2xl bg-emerald-500 text-slate-950 font-extrabold text-sm hover:bg-emerald-400 transition-all shadow-[0_0_25px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
+              className="h-11 w-full rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2"
             >
               <KeyRound className="h-4 w-4" /> Unlock Admin Controls
             </button>
@@ -684,40 +682,34 @@ function AdminPage() {
     );
   }
 
-  // ----- AUTHENTICATED COMMAND CENTER PANEL -----
+  // ----- AUTHENTICATED ADMIN PANEL -----
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 px-4 py-8 sm:py-10 max-w-5xl mx-auto font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-      {/* Header Command Bar */}
-      <div className="rounded-3xl border border-slate-800/90 bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.5)] mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-background text-foreground px-4 py-8 max-w-4xl mx-auto font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold uppercase tracking-wider mb-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <Shield className="h-3.5 w-3.5" /> SYSTEM ADMIN COMMAND CENTER
+          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
+            <Shield className="h-4 w-4" /> ORGANIZER CONTROL PANEL
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Cluster Admin & Dataset Orchestrator</h1>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-xl">
-            Orchestrate PostgreSQL datasets, execute audited cluster resets, and bulk import document spreadsheets directly to the load balancer database.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">System Admin & Dataset Manager</h1>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleWakeBackend}
             disabled={waking}
-            className="px-4 py-2.5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center gap-2 disabled:opacity-50"
+            className="px-3.5 py-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5 shadow-sm"
             title="Wake all Render instances before presentation"
           >
-            <Zap className="h-4 w-4" />
+            <Zap className="h-3.5 w-3.5" />
             {waking ? "Waking..." : "⚡ Wake Backend Nodes"}
           </button>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="px-4 py-2.5 rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-200 text-xs font-bold hover:bg-slate-700/80 transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 rounded-xl border border-border bg-card text-xs font-semibold hover:border-foreground/40 transition-colors"
           >
             Lock Panel 🔒
           </button>
@@ -727,28 +719,28 @@ function AdminPage() {
       {/* Message Toast */}
       {actionMessage && (
         <div
-          className={`mb-8 rounded-2xl p-4 text-xs font-bold flex items-center gap-3 border shadow-lg ${
+          className={`mb-6 rounded-xl p-4 text-xs font-semibold flex items-center gap-2 border shadow-sm ${
             actionMessage.type === "success"
-              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
-              : "bg-rose-500/15 border-rose-500/40 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.1)]"
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+              : "bg-destructive/10 border-destructive/30 text-destructive"
           }`}
         >
-          {actionMessage.type === "success" ? <CheckCircle className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
+          {actionMessage.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
           {actionMessage.text}
         </div>
       )}
 
-      {/* Control Panels Grid (3 Columns) */}
+      {/* Control Panels Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Reset Voting Data */}
-        <div className="rounded-3xl border border-rose-500/30 bg-slate-900/90 backdrop-blur-xl p-6 flex flex-col justify-between shadow-xl transition-all hover:border-rose-500/50">
+        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-rose-400 font-bold text-[11px] uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-destructive font-bold text-xs uppercase tracking-wider mb-2">
               <AlertTriangle className="h-4 w-4" /> Danger Zone
             </div>
-            <h2 className="text-base font-bold text-white">Clear All Voting Data</h2>
-            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-              Auto-downloads a backup JSON file before wiping all Votes & Voters from database.
+            <h2 className="text-base font-bold">Clear All Voting Data</h2>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Auto-downloads a backup JSON file before clearing Votes & Voters from database.
             </p>
           </div>
 
@@ -756,52 +748,52 @@ function AdminPage() {
             type="button"
             onClick={handleResetVotes}
             disabled={resetting}
-            className="mt-6 h-11 w-full rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-400 font-bold text-xs hover:bg-rose-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
+            className="mt-6 h-10 w-full rounded-xl bg-destructive/20 border border-destructive/40 text-destructive font-bold text-xs hover:bg-destructive/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
-            <Archive className="h-4 w-4" />
+            <Archive className="h-3.5 w-3.5" />
             {resetting ? "Backing up & Clearing..." : "🧹 Backup & Clear Votes"}
           </button>
         </div>
 
         {/* Export Results */}
-        <div className="rounded-3xl border border-blue-500/30 bg-slate-900/90 backdrop-blur-xl p-6 flex flex-col justify-between shadow-xl transition-all hover:border-blue-500/50">
+        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-blue-400 font-bold text-[11px] uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider mb-2">
               <Download className="h-4 w-4" /> Reports & Export
             </div>
-            <h2 className="text-base font-bold text-white">Export Official Results</h2>
-            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            <h2 className="text-base font-bold">Export Official Results</h2>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Export results as CSV spreadsheet or generate a print-ready PDF summary report.
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-2.5">
+          <div className="mt-6 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={handleExportCSV}
               disabled={exporting}
-              className="h-11 rounded-2xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-xs hover:border-slate-500 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              className="h-10 rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors flex items-center justify-center gap-1"
             >
-              <FileText className="h-4 w-4 text-blue-400" /> CSV
+              <FileText className="h-3.5 w-3.5" /> CSV
             </button>
             <button
               type="button"
               onClick={handlePrintPDF}
-              className="h-11 rounded-2xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-xs hover:border-slate-500 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              className="h-10 rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors flex items-center justify-center gap-1"
             >
-              <Printer className="h-4 w-4 text-blue-400" /> PDF / Print
+              <Printer className="h-3.5 w-3.5" /> PDF / Print
             </button>
           </div>
         </div>
 
         {/* Restore Default Dataset */}
-        <div className="rounded-3xl border border-emerald-500/30 bg-slate-900/90 backdrop-blur-xl p-6 flex flex-col justify-between shadow-xl transition-all hover:border-emerald-500/50">
+        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
           <div>
-            <div className="flex items-center gap-2 text-emerald-400 font-bold text-[11px] uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">
               <Database className="h-4 w-4" /> Preset Dataset
             </div>
-            <h2 className="text-base font-bold text-white">Seed Generic Demo Projects</h2>
-            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            <h2 className="text-base font-bold">Seed Generic Demo Projects</h2>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Populates default Expo projects (Team #1, Team #2, Team #3).
             </p>
           </div>
@@ -809,22 +801,22 @@ function AdminPage() {
           <button
             type="button"
             onClick={handleSeedDefaults}
-            className="mt-6 h-11 w-full rounded-2xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-xs hover:border-emerald-500/50 hover:text-emerald-400 transition-all shadow-sm"
+            className="mt-6 h-10 w-full rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors"
           >
             🌱 Seed 3 Demo Projects
           </button>
         </div>
       </div>
 
-      {/* Universal Document & Dataset Importer (Spotlight Feature) */}
-      <div className="rounded-3xl border border-emerald-500/40 bg-slate-900/95 backdrop-blur-2xl p-7 sm:p-8 mb-8 shadow-[0_0_40px_rgba(16,185,129,0.08)] relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* Universal Document & Dataset Importer */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-card p-6 mb-8 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
-              <FileSpreadsheet className="h-4 w-4 text-emerald-400 filter drop-shadow-[0_0_6px_rgba(16,185,129,0.4)]" /> Bulk Dataset Seeder
+              <FileSpreadsheet className="h-4 w-4" /> Bulk Dataset Seeder
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Universal Document Dataset Importer</h2>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            <h2 className="text-lg font-bold tracking-tight">Universal Document Dataset Importer</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
               Upload ANY document (.csv, .txt, .json, .tsv) or paste text content to seed your Expo projects directly into PostgreSQL.
             </p>
           </div>
@@ -833,27 +825,27 @@ function AdminPage() {
             <button
               type="button"
               onClick={downloadCsvTemplate}
-              className="px-3.5 py-2 rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-200 text-xs font-semibold hover:border-emerald-500/50 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
             >
-              <Download className="h-3.5 w-3.5 text-emerald-400" /> CSV Template
+              <Download className="h-3.5 w-3.5" /> CSV Template
             </button>
             <button
               type="button"
               onClick={downloadTxtTemplate}
-              className="px-3.5 py-2 rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-200 text-xs font-semibold hover:border-emerald-500/50 hover:text-white transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
             >
-              <Download className="h-3.5 w-3.5 text-emerald-400" /> TXT Template
+              <Download className="h-3.5 w-3.5" /> TXT Template
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* File Upload Zone */}
-          <div className="rounded-2xl border-2 border-dashed border-emerald-500/30 bg-slate-950/60 p-6 flex flex-col items-center justify-center text-center transition-all hover:border-emerald-400/60 hover:bg-slate-950/80">
-            <Upload className="h-8 w-8 text-emerald-400 mb-3 filter drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <p className="text-xs font-bold text-slate-100 mb-1">Upload Document File</p>
-            <p className="text-[11px] text-slate-400 mb-4">Supports .CSV, .TXT, .JSON, .TSV documents</p>
-            <label className="cursor-pointer px-5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+          <div className="rounded-xl border border-dashed border-border bg-background/50 p-4 flex flex-col items-center justify-center text-center">
+            <Upload className="h-6 w-6 text-emerald-400 mb-2" />
+            <p className="text-xs font-semibold mb-1">Upload Document File</p>
+            <p className="text-[11px] text-muted-foreground mb-3">Supports .CSV, .TXT, .JSON, .TSV documents</p>
+            <label className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all">
               Choose Document File
               <input
                 type="file"
@@ -866,57 +858,57 @@ function AdminPage() {
 
           {/* Raw Text Paste Box */}
           <div className="flex flex-col">
-            <label className="text-xs font-bold text-slate-300 mb-2">Or Paste Document / Text Content Directly:</label>
+            <label className="text-xs font-semibold text-muted-foreground mb-1">Or Paste Document / Text Content Directly:</label>
             <textarea
-              rows={5}
+              rows={4}
               placeholder="Team No, Project Title, Team Lead&#10;1, Smart IoT Meter, Alex Vance&#10;OR: 1 - Autonomous Drone - Priya Sharma&#10;OR JSON array"
               value={csvText}
               onChange={(e) => parseDocumentString(e.target.value)}
-              className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 text-xs font-mono text-emerald-400 placeholder:text-slate-600 outline-none focus:border-emerald-500/60 transition-colors resize-none shadow-inner"
+              className="w-full rounded-xl border border-border bg-background p-3 text-xs font-mono outline-none focus:border-foreground/40 transition-colors resize-none"
             />
           </div>
         </div>
 
         {/* CSV Parse Warning / Info */}
         {csvError && (
-          <div className="mb-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-400 font-semibold flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0" /> {csvError}
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400 font-medium">
+            {csvError}
           </div>
         )}
 
         {/* CSV Preview Table & Execution */}
         {csvParsed.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-slate-800 space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <span className="text-xs font-extrabold text-emerald-400 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Verified & Extracted
+          <div className="mt-4 pt-4 border-t border-border/80 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Detected
               </span>
 
-              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none font-medium">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={clearBeforeSeed}
                   onChange={(e) => setClearBeforeSeed(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+                  className="rounded border-border"
                 />
                 Clear un-voted dataset before import (Replace all)
               </label>
             </div>
 
             {/* Preview snippet table */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/90 overflow-hidden text-xs shadow-inner">
-              <div className="bg-slate-800/60 px-5 py-3 border-b border-slate-800 font-bold flex justify-between text-slate-400 text-[11px] uppercase tracking-wider">
+            <div className="rounded-xl border border-border bg-background/80 overflow-hidden text-xs">
+              <div className="bg-secondary/60 px-4 py-2 border-b border-border font-semibold flex justify-between text-muted-foreground text-[11px] uppercase tracking-wider">
                 <span>Preview (First {Math.min(5, csvParsed.length)} of {csvParsed.length})</span>
                 <span>Team Lead</span>
               </div>
-              <div className="divide-y divide-slate-800/60 max-h-52 overflow-y-auto">
+              <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
                 {csvParsed.slice(0, 10).map((p, i) => (
-                  <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-slate-900/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">Team #{p.project_number}</span>
-                      <span className="font-semibold text-slate-100 truncate max-w-sm">{p.title}</span>
+                  <div key={i} className="px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-bold text-emerald-400">Team #{p.project_number}</span>
+                      <span className="font-semibold text-foreground truncate max-w-xs">{p.title}</span>
                     </div>
-                    <span className="text-slate-400 text-[11px] font-medium">{p.team_name || "—"}</span>
+                    <span className="text-muted-foreground text-[11px]">{p.team_name || "—"}</span>
                   </div>
                 ))}
               </div>
@@ -926,7 +918,7 @@ function AdminPage() {
               type="button"
               onClick={handleBulkSeedCsv}
               disabled={seedingCsv}
-              className="h-12 w-full rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(16,185,129,0.4)] disabled:opacity-50"
+              className="h-11 w-full rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
             >
               {seedingCsv ? (
                 <>
@@ -943,18 +935,18 @@ function AdminPage() {
       </div>
 
       {/* Add New Project Form */}
-      <div className="rounded-3xl border border-slate-800/90 bg-slate-900/90 backdrop-blur-xl p-7 mb-8 shadow-xl">
-        <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <Plus className="h-4.5 w-4.5 text-emerald-400" /> Add Single Project to Dataset
+      <div className="rounded-2xl border border-border bg-card p-6 mb-8 shadow-sm">
+        <h2 className="text-base font-bold mb-4 flex items-center gap-2">
+          <Plus className="h-4 w-4 text-emerald-400" /> Add New Project to Dataset
         </h2>
 
-        <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             type="number"
             placeholder="Team No. (e.g. 1)"
             value={projNum}
             onChange={(e) => setProjNum(e.target.value)}
-            className="h-12 px-4 rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-500 text-xs font-semibold outline-none focus:border-emerald-500/60 transition-all"
+            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
             required
           />
           <input
@@ -962,7 +954,7 @@ function AdminPage() {
             placeholder="Project Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-12 px-4 rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-500 text-xs font-semibold outline-none focus:border-emerald-500/60 transition-all"
+            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
             required
           />
           <input
@@ -970,12 +962,12 @@ function AdminPage() {
             placeholder="Team Lead Name (Optional)"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            className="h-12 px-4 rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-500 text-xs font-semibold outline-none focus:border-emerald-500/60 transition-all"
+            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
           />
           <button
             type="submit"
             disabled={adding}
-            className="sm:col-span-3 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-extrabold text-xs hover:bg-emerald-500/30 transition-all disabled:opacity-50 mt-1 shadow-sm"
+            className="sm:col-span-3 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/30 transition-colors disabled:opacity-50 mt-1 shadow-sm"
           >
             {adding ? "Adding Project..." : "+ Add Project to Dataset"}
           </button>
@@ -983,29 +975,26 @@ function AdminPage() {
       </div>
 
       {/* Projects List */}
-      <div className="rounded-3xl border border-slate-800/90 bg-slate-900/90 backdrop-blur-xl p-7 shadow-xl">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-base font-bold text-white">Active Dataset Registry</h2>
-            <p className="text-xs text-slate-400 mt-0.5">{projects.length} Teams currently registered in database</p>
-          </div>
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold">Current Expo Dataset ({projects.length} Projects)</h2>
           <button
             type="button"
             onClick={fetchProjects}
-            className="p-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-xs text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
+            className="p-2 rounded-xl border border-border bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
             title="Refresh list"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center text-xs text-slate-400 py-10 animate-pulse">
+          <div className="text-center text-xs text-muted-foreground py-8 animate-pulse">
             Loading active project dataset...
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center text-xs text-slate-400 py-10 border border-dashed border-slate-800 rounded-2xl bg-slate-950/50">
-            No projects in dataset. Use the Universal Document Importer or form above to seed projects.
+          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border rounded-xl">
+            No projects in dataset. Use the form above to add projects or click Seed Default.
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -1019,15 +1008,15 @@ function AdminPage() {
                       e.preventDefault();
                       handleSaveEdit(p.id);
                     }}
-                    className="rounded-2xl border border-emerald-500/40 bg-slate-950 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <input
                         type="number"
                         placeholder="Team No."
                         value={editNum}
                         onChange={(e) => setEditNum(e.target.value)}
-                        className="h-10 px-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-100"
+                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
                         required
                       />
                       <input
@@ -1035,7 +1024,7 @@ function AdminPage() {
                         placeholder="Project Title"
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="h-10 px-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-100"
+                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
                         required
                       />
                       <input
@@ -1043,7 +1032,7 @@ function AdminPage() {
                         placeholder="Team Lead Name"
                         value={editTeam}
                         onChange={(e) => setEditTeam(e.target.value)}
-                        className="h-10 px-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-100"
+                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
                       />
                     </div>
 
@@ -1051,14 +1040,14 @@ function AdminPage() {
                       <button
                         type="submit"
                         disabled={savingId === p.id}
-                        className="px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                        className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
                       >
                         {savingId === p.id ? "Saving..." : "Save"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        className="px-4 py-2 rounded-xl bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                        className="px-3.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                       >
                         Cancel
                       </button>
@@ -1070,15 +1059,15 @@ function AdminPage() {
               return (
                 <div
                   key={p.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-emerald-500/30 transition-all shadow-sm"
+                  className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                 >
-                  <div className="flex items-center gap-3.5">
-                    <span className="flex h-10 px-3 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 font-bold text-xs text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 px-2.5 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
                       Team #{p.project_number}
                     </span>
                     <div>
-                      <div className="font-bold text-sm text-slate-100 tracking-tight">{p.title}</div>
-                      {p.team_name && <div className="text-slate-400 text-[11px] font-medium mt-0.5">Team Lead: {p.team_name}</div>}
+                      <div className="font-bold text-sm">{p.title}</div>
+                      {p.team_name && <div className="text-muted-foreground text-[11px]">Team Lead: {p.team_name}</div>}
                     </div>
                   </div>
 
@@ -1086,18 +1075,18 @@ function AdminPage() {
                     <button
                       type="button"
                       onClick={() => startEdit(p)}
-                      className="p-2.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-100 transition-colors"
+                      className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                       title="Edit"
                     >
-                      <Edit3 className="h-4 w-4" />
+                      <Edit3 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteProject(p.id, Number(p.project_number))}
-                      className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                      className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                       title="Delete"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
