@@ -130,7 +130,7 @@ function ProjectsPage() {
         <div className="mb-4">
           <input
             type="search"
-            placeholder="Search by number, title, or team..."
+            placeholder="Search by Project ID, title, or team lead..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input-style text-xs"
@@ -180,7 +180,7 @@ function ProjectsPage() {
                       </div>
                       {p.team_name && (
                         <div className="text-xs text-muted-foreground mt-0.5 font-medium">
-                          Team: {p.team_name}
+                          Team Lead: {p.team_name}
                         </div>
                       )}
                     </div>

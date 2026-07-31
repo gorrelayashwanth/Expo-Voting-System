@@ -26,7 +26,7 @@ export function getDeviceFingerprint() {
 }
 
 type Options = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   signal?: AbortSignal;
   includeFingerprint?: boolean;
@@ -151,6 +151,7 @@ export interface DashboardProjectVote {
   id: string;
   project_number: number | string;
   title: string;
+  team_name?: string | null;
   votes: number;
 }
 

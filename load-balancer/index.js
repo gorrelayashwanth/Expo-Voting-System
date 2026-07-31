@@ -26,7 +26,7 @@ const app = express();
 // Always allow all origins — this is a public voting API.
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Device-Fingerprint');
   res.setHeader('Access-Control-Expose-Headers', 'X-Device-Fingerprint');
 
@@ -441,6 +441,7 @@ app.get('/api/dashboard-summary', async (req, res) => {
             id: p.id,
             project_number: p.project_number,
             title: p.title,
+            team_name: p.team_name,
             votes: p._count.votes
         }));
 

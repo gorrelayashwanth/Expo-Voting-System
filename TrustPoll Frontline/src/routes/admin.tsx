@@ -59,6 +59,7 @@ function AdminPage() {
   const [editNum, setEditNum] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editTeam, setEditTeam] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   // Action Loading States
   const [resetting, setResetting] = useState(false);
@@ -213,9 +214,9 @@ function AdminPage() {
     setExporting(true);
     try {
       const summary = await api.dashboardSummary();
-      let csvContent = "data:text/csv;charset=utf-8,Project Number,Project Title,Team Name,Votes Count\n";
+      let csvContent = "data:text/csv;charset=utf-8,Project ID,Project Title,Team Lead Name,Votes Count\n";
       summary.projectVotes.forEach((p) => {
-        csvContent += `"${p.project_number}","${p.title}","${p.team_name || ''}",${p.votes_count}\n`;
+        csvContent += `"${p.project_number}","${p.title}","${p.team_name || ''}",${p.votes}\n`;
       });
 
       const encodedUri = encodeURI(csvContent);
@@ -248,7 +249,7 @@ function AdminPage() {
           <td style="padding:12px; border:1px solid #e2e8f0; font-weight:bold;">#${p.project_number}</td>
           <td style="padding:12px; border:1px solid #e2e8f0;"><strong>${p.title}</strong></td>
           <td style="padding:12px; border:1px solid #e2e8f0; color:#64748b;">${p.team_name || "N/A"}</td>
-          <td style="padding:12px; border:1px solid #e2e8f0; text-align:right; font-weight:bold; color:#10b981; font-size:16px;">${p.votes_count}</td>
+          <td style="padding:12px; border:1px solid #e2e8f0; text-align:right; font-weight:bold; color:#10b981; font-size:16px;">${p.votes}</td>
         </tr>
       `
         )
@@ -282,9 +283,9 @@ function AdminPage() {
           <table>
             <thead>
               <tr>
-                <th>Project #</th>
-                <th>Title</th>
-                <th>Team</th>
+                <th>Project ID</th>
+                <th>Project Title</th>
+                <th>Team Lead Name</th>
                 <th style="text-align:right;">Total Votes</th>
               </tr>
             </thead>
@@ -315,7 +316,7 @@ function AdminPage() {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projNum || !title.trim()) {
-      showMsg("error", "Project Number and Title are required.");
+      showMsg("error", "Project ID and Title are required.");
       return;
     }
     setAdding(true);
@@ -356,6 +357,11 @@ function AdminPage() {
   };
 
   const handleSaveEdit = async (id: string) => {
+    if (!editNum || !editTitle.trim()) {
+      showMsg("error", "Project ID and Title are required.");
+      return;
+    }
+    setSavingId(id);
     try {
       await api.adminEditProject(id, {
         project_number: parseInt(editNum, 10),
@@ -367,6 +373,8 @@ function AdminPage() {
       fetchProjects();
     } catch (e: any) {
       showMsg("error", e.message || "Failed to update project.");
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -594,7 +602,7 @@ function AdminPage() {
         <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             type="number"
-            placeholder="Project # (e.g. 104)"
+            placeholder="Project ID (e.g. 104)"
             value={projNum}
             onChange={(e) => setProjNum(e.target.value)}
             className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
@@ -610,7 +618,7 @@ function AdminPage() {
           />
           <input
             type="text"
-            placeholder="Team Name (Optional)"
+            placeholder="Team Lead Name (Optional)"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
             className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
@@ -620,7 +628,7 @@ function AdminPage() {
             disabled={adding}
             className="sm:col-span-3 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/30 transition-colors disabled:opacity-50 mt-1 shadow-sm"
           >
-            {adding ? "Adding Project..." : "+ Add Project to Database"}
+            {adding ? "Adding Project..." : "+ Add Project to Dataset"}
           </button>
         </form>
       </div>
@@ -651,82 +659,94 @@ function AdminPage() {
           <div className="flex flex-col gap-3">
             {projects.map((p) => {
               const isEditing = editingId === p.id;
-              return (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                >
-                  {isEditing ? (
+              if (isEditing) {
+                return (
+                  <form
+                    key={p.id}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSaveEdit(p.id);
+                    }}
+                    className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <input
                         type="number"
+                        placeholder="Project ID"
                         value={editNum}
                         onChange={(e) => setEditNum(e.target.value)}
                         className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                        required
                       />
                       <input
                         type="text"
+                        placeholder="Project Title"
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                        required
                       />
                       <input
                         type="text"
+                        placeholder="Team Lead Name"
                         value={editTeam}
                         onChange={(e) => setEditTeam(e.target.value)}
                         className="h-9 px-2.5 rounded-lg border border-border bg-card"
                       />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
-                        #{p.project_number}
-                      </span>
-                      <div>
-                        <div className="font-bold text-sm">{p.title}</div>
-                        {p.team_name && <div className="text-muted-foreground text-[11px]">Team: {p.team_name}</div>}
-                      </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="submit"
+                        disabled={savingId === p.id}
+                        className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                      >
+                        {savingId === p.id ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="px-3.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                  )}
+                  </form>
+                );
+              }
+
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
+                      #{p.project_number}
+                    </span>
+                    <div>
+                      <div className="font-bold text-sm">{p.title}</div>
+                      {p.team_name && <div className="text-muted-foreground text-[11px]">Team Lead: {p.team_name}</div>}
+                    </div>
+                  </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {isEditing ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handleSaveEdit(p.id)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => startEdit(p)}
-                          className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                          title="Edit"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteProject(p.id, p.project_number)}
-                          className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => startEdit(p)}
+                      className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                      title="Edit"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProject(p.id, Number(p.project_number))}
+                      className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               );

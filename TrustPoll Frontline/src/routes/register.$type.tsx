@@ -30,7 +30,7 @@ const TITLES: Record<VoterType, string> = {
 const SUBTITLES: Record<VoterType, string> = {
   guest: "Provide your visitor & organisation details for ballot issuance.",
   faculty: "Enter your department details to receive an official judge ballot.",
-  student: "Enter your student roll number and department details.",
+  student: "Enter your academic year and department details.",
 };
 
 function friendlyError(raw: string): string {
@@ -78,7 +78,6 @@ function RegisterPage() {
   const voterType = parsed.data;
 
   const [name, setName] = useState("");
-  const [rollNumber, setRollNumber] = useState("");
   const [department, setDepartment] = useState("");
   const [year, setYear] = useState("");
   const [organisation, setOrganisation] = useState("");
@@ -96,7 +95,6 @@ function RegisterPage() {
       if (!department.trim()) return "Department is required.";
     }
     if (voterType === "student") {
-      if (!rollNumber.trim()) return "Roll Number is required.";
       if (!year.trim()) return "Academic Year is required.";
       if (!department.trim()) return "Department is required.";
     }
@@ -106,7 +104,7 @@ function RegisterPage() {
   function buildIdentifier(): string {
     if (voterType === "guest") return `${name.trim()}|${organisation.trim()}`;
     if (voterType === "faculty") return `${name.trim()}|${department.trim()}`;
-    return `${rollNumber.trim()}|${year.trim()}|${department.trim()}`;
+    return `${name.trim()}|${year.trim()}|${department.trim()}`;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -227,17 +225,6 @@ function RegisterPage() {
           {/* Student Fields */}
           {voterType === "student" && (
             <>
-              <Field label="Roll Number / Student ID" htmlFor="rollNumber" required>
-                <input
-                  id="rollNumber"
-                  type="text"
-                  placeholder="e.g. 21CS108"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
-                  className="input-style"
-                  required
-                />
-              </Field>
               <Field label="Academic Year" htmlFor="year" required>
                 <input
                   id="year"
