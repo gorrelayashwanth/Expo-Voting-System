@@ -611,14 +611,14 @@ function AdminPage() {
   // ----- BIOMETRIC & PIN AUTHENTICATION GATE -----
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-5 font-sans">
-        <div className="max-w-sm w-full rounded-2xl border border-border/80 bg-card/80 backdrop-blur-xl p-8 text-center shadow-2xl transition-all">
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mx-auto mb-5 shadow-inner">
+      <div className="min-h-screen bg-[#eceef2] text-zinc-900 flex flex-col items-center justify-center p-6 font-sans">
+        <div className="max-w-md w-full rounded-[32px] border border-zinc-200/70 bg-white p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all">
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white mx-auto mb-5 shadow-lg">
             <Shield className="h-7 w-7" />
           </div>
 
-          <h1 className="text-xl font-bold tracking-tight">Admin Passcode & Biometrics</h1>
-          <p className="text-xs text-muted-foreground mt-1.5 mb-6 leading-relaxed">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Admin Passcode & Biometrics</h1>
+          <p className="text-xs text-zinc-500 mt-1.5 mb-6 leading-relaxed">
             Authenticate via Face ID / Touch ID or enter your organizer passcode to unlock controls.
           </p>
 
@@ -627,37 +627,37 @@ function AdminPage() {
             type="button"
             onClick={handleBiometricAuth}
             disabled={biometricScanning}
-            className="mb-5 h-12 w-full rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold text-xs hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="mb-5 h-12 w-full rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 text-zinc-900 font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             {biometricScanning ? (
               <>
-                <ScanFace className="h-4 w-4 animate-bounce" /> Scanning Face ID / Biometrics...
+                <ScanFace className="h-4 w-4 animate-bounce text-zinc-900" /> Scanning Face ID / Biometrics...
               </>
             ) : (
               <>
-                <Fingerprint className="h-4.5 w-4.5 text-emerald-400" /> Unlock with Face ID / Touch ID
+                <Fingerprint className="h-4.5 w-4.5 text-zinc-900" /> Unlock with Face ID / Touch ID
               </>
             )}
           </button>
 
-          <div className="relative my-4 text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-2 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+          <div className="relative my-5 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-3 before:h-px before:flex-1 before:bg-zinc-200 after:h-px after:flex-1 after:bg-zinc-200">
             or enter passcode
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter Organizer Passcode"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
-                className="h-11 w-full rounded-xl border border-border bg-background/60 px-4 text-center text-sm font-semibold tracking-wider outline-none focus:border-foreground/40 transition-colors"
+                className="h-12 w-full rounded-2xl border border-zinc-200 bg-[#f8f9fa] px-4 text-center text-sm font-semibold tracking-wider outline-none focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all text-zinc-900"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3.5 top-3.5 text-zinc-400 hover:text-zinc-700 transition-colors"
                 title={showPassword ? "Hide Passcode" : "Show Passcode"}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -665,14 +665,14 @@ function AdminPage() {
             </div>
 
             {pinError && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2.5 font-medium">
+              <div className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 font-medium">
                 {pinError}
               </div>
             )}
 
             <button
               type="submit"
-              className="h-11 w-full rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2"
+              className="h-12 w-full rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2"
             >
               <KeyRound className="h-4 w-4" /> Unlock Admin Controls
             </button>
@@ -684,34 +684,41 @@ function AdminPage() {
 
   // ----- AUTHENTICATED ADMIN PANEL -----
   return (
-    <div className="min-h-screen bg-background text-foreground px-6 lg:px-12 py-8 max-w-7xl mx-auto font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6 mb-8">
+    <div className="min-h-screen bg-[#eceef2] text-zinc-900 px-6 lg:px-12 py-8 max-w-7xl mx-auto font-sans">
+      {/* Top Navigation & Header Bar (Skillset Dashboard Style) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
-            <Shield className="h-4 w-4" /> ORGANIZER CONTROL PANEL
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">
+            <Shield className="h-3.5 w-3.5 text-zinc-700" /> Admin Control Center
           </div>
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">System Admin & Dataset Manager</h1>
+          <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-zinc-900">Dashboard</h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Status Filter Pills */}
+          <div className="flex items-center bg-white p-1 rounded-full border border-zinc-200/80 shadow-sm text-xs font-semibold">
+            <span className="bg-zinc-900 text-white rounded-full px-4 py-1.5 shadow-sm">Overview</span>
+            <span className="text-zinc-600 px-4 py-1.5 hover:text-zinc-900 cursor-pointer">Live Dataset</span>
+            <span className="text-zinc-600 px-4 py-1.5 hover:text-zinc-900 cursor-pointer">Reports</span>
+          </div>
+
           <button
             type="button"
             onClick={handleWakeBackend}
             disabled={waking}
-            className="px-3.5 py-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-4 py-2 rounded-full border border-zinc-200 bg-white text-zinc-800 text-xs font-semibold hover:bg-zinc-50 transition-all flex items-center gap-1.5 shadow-sm"
             title="Wake all Render instances before presentation"
           >
-            <Zap className="h-3.5 w-3.5" />
-            {waking ? "Waking..." : "⚡ Wake Backend Nodes"}
+            <Zap className="h-3.5 w-3.5 text-emerald-600" />
+            {waking ? "Waking..." : "Wake Nodes"}
           </button>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="px-3.5 py-2 rounded-xl border border-border bg-card text-xs font-semibold hover:border-foreground/40 transition-colors"
+            className="px-4 py-2 rounded-full bg-zinc-900 text-white text-xs font-semibold hover:bg-zinc-800 transition-all shadow-sm flex items-center gap-1.5"
           >
-            Lock Panel 🔒
+            <Lock className="h-3.5 w-3.5" /> Lock Panel
           </button>
         </div>
       </div>
@@ -719,109 +726,111 @@ function AdminPage() {
       {/* Message Toast */}
       {actionMessage && (
         <div
-          className={`mb-6 rounded-xl p-4 text-xs font-semibold flex items-center gap-2 border shadow-sm ${
+          className={`mb-6 rounded-2xl p-4 text-xs font-semibold flex items-center gap-2 border shadow-sm ${
             actionMessage.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-              : "bg-destructive/10 border-destructive/30 text-destructive"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
-          {actionMessage.type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+          {actionMessage.type === "success" ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 text-rose-600" />}
           {actionMessage.text}
         </div>
       )}
 
-      {/* Top Quick Actions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Reset Voting Data */}
-        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
+      {/* Top Stat Cards Grid (Matching reference image card styling) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+        {/* Total Projects Featured Dark Card */}
+        <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-black text-white rounded-[28px] p-6 shadow-xl flex flex-col justify-between min-h-[140px] relative overflow-hidden">
           <div>
-            <div className="flex items-center gap-2 text-destructive font-bold text-xs uppercase tracking-wider mb-2">
-              <AlertTriangle className="h-4 w-4" /> Danger Zone
-            </div>
-            <h2 className="text-base font-bold">Clear All Voting Data</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Auto-downloads a backup JSON file before clearing Votes & Voters from database.
-            </p>
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Active Teams</span>
+            <div className="text-3xl font-black mt-2 tracking-tight">{projects.length} Teams</div>
           </div>
+          <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5 mt-3">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live Database Connected
+          </div>
+        </div>
 
+        {/* Danger Zone Card */}
+        <div className="bg-white rounded-[28px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 flex flex-col justify-between min-h-[140px]">
+          <div>
+            <span className="text-[11px] font-semibold text-rose-500 uppercase tracking-wider flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" /> Danger Zone
+            </span>
+            <div className="text-base font-bold text-zinc-900 mt-1">Clear Votes Data</div>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Auto-backups JSON before wiping</p>
+          </div>
           <button
             type="button"
             onClick={handleResetVotes}
             disabled={resetting}
-            className="mt-6 h-10 w-full rounded-xl bg-destructive/20 border border-destructive/40 text-destructive font-bold text-xs hover:bg-destructive/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="mt-3 py-2 px-4 w-full rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
           >
             <Archive className="h-3.5 w-3.5" />
-            {resetting ? "Backing up & Clearing..." : "🧹 Backup & Clear Votes"}
+            {resetting ? "Clearing..." : "Backup & Clear"}
           </button>
         </div>
 
-        {/* Export Results */}
-        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
+        {/* Reports & Export Card */}
+        <div className="bg-white rounded-[28px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 flex flex-col justify-between min-h-[140px]">
           <div>
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider mb-2">
-              <Download className="h-4 w-4" /> Reports & Export
-            </div>
-            <h2 className="text-base font-bold">Export Official Results</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Export results as CSV spreadsheet or generate a print-ready PDF summary report.
-            </p>
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+              <Download className="h-3.5 w-3.5 text-zinc-700" /> Reports & Export
+            </span>
+            <div className="text-base font-bold text-zinc-900 mt-1">Export Results</div>
+            <p className="text-[11px] text-zinc-500 mt-0.5">CSV spreadsheet or PDF print</p>
           </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={handleExportCSV}
               disabled={exporting}
-              className="h-10 rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors flex items-center justify-center gap-1"
+              className="py-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold text-xs transition-colors flex items-center justify-center gap-1"
             >
               <FileText className="h-3.5 w-3.5" /> CSV
             </button>
             <button
               type="button"
               onClick={handlePrintPDF}
-              className="h-10 rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors flex items-center justify-center gap-1"
+              className="py-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold text-xs transition-colors flex items-center justify-center gap-1"
             >
-              <Printer className="h-3.5 w-3.5" /> PDF / Print
+              <Printer className="h-3.5 w-3.5" /> PDF
             </button>
           </div>
         </div>
 
-        {/* Restore Default Dataset */}
-        <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
+        {/* Preset Dataset Card */}
+        <div className="bg-white rounded-[28px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 flex flex-col justify-between min-h-[140px]">
           <div>
-            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">
-              <Database className="h-4 w-4" /> Preset Dataset
-            </div>
-            <h2 className="text-base font-bold">Seed Generic Demo Projects</h2>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Populates default Expo projects (Team #1, Team #2, Team #3).
-            </p>
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+              <Database className="h-3.5 w-3.5 text-zinc-700" /> Quick Seed
+            </span>
+            <div className="text-base font-bold text-zinc-900 mt-1">Demo Projects</div>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Populate default 3 teams</p>
           </div>
-
           <button
             type="button"
             onClick={handleSeedDefaults}
-            className="mt-6 h-10 w-full rounded-xl bg-secondary border border-border text-foreground font-bold text-xs hover:border-foreground/40 transition-colors"
+            className="mt-3 py-2 px-4 w-full rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-colors shadow-sm"
           >
-            🌱 Seed 3 Demo Projects
+            🌱 Seed 3 Teams
           </button>
         </div>
       </div>
 
-      {/* Main Desktop Dashboard Grid */}
+      {/* Main Laptop / Desktop Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Main Column: Importer & Add Form (col-span-7) */}
+        {/* Left Column: Importer & Add Single Project Form (col-span-7) */}
         <div className="lg:col-span-7 space-y-8">
-          {/* Universal Document & Dataset Importer */}
-          <div className="rounded-2xl border border-emerald-500/30 bg-card p-6 shadow-sm relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          {/* Universal Document Importer Card */}
+          <div className="bg-white rounded-[28px] p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
+                <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5 mb-1">
                   <FileSpreadsheet className="h-4 w-4" /> Bulk Dataset Seeder
-                </div>
-                <h2 className="text-lg font-bold tracking-tight">Universal Document Dataset Importer</h2>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                  Upload ANY document (.csv, .txt, .json, .tsv) or paste text content to seed your Expo projects directly into PostgreSQL.
+                </span>
+                <h2 className="text-xl font-bold tracking-tight text-zinc-900">Universal Document Dataset Importer</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Upload ANY document (.csv, .txt, .json, .tsv) or paste text list content to seed PostgreSQL.
                 </p>
               </div>
 
@@ -829,28 +838,30 @@ function AdminPage() {
                 <button
                   type="button"
                   onClick={downloadCsvTemplate}
-                  className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold transition-colors flex items-center gap-1"
                 >
-                  <Download className="h-3.5 w-3.5" /> CSV Template
+                  <Download className="h-3 w-3" /> CSV Template
                 </button>
                 <button
                   type="button"
                   onClick={downloadTxtTemplate}
-                  className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold transition-colors flex items-center gap-1"
                 >
-                  <Download className="h-3.5 w-3.5" /> TXT Template
+                  <Download className="h-3 w-3" /> TXT Template
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {/* File Upload Zone */}
-              <div className="rounded-xl border border-dashed border-border bg-background/50 p-4 flex flex-col items-center justify-center text-center min-h-[140px]">
-                <Upload className="h-6 w-6 text-emerald-400 mb-2" />
-                <p className="text-xs font-semibold mb-1">Upload Document File</p>
-                <p className="text-[11px] text-muted-foreground mb-3">Supports .CSV, .TXT, .JSON, .TSV documents</p>
-                <label className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all">
-                  Choose Document File
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+              {/* Dropzone Box */}
+              <div className="rounded-2xl border-2 border-dashed border-zinc-200 bg-[#f8f9fa] p-5 flex flex-col items-center justify-center text-center min-h-[150px] hover:border-zinc-400 transition-colors">
+                <div className="h-10 w-10 rounded-2xl bg-zinc-900 text-white flex items-center justify-center mb-3 shadow-md">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-bold text-zinc-900 mb-0.5">Upload Document File</p>
+                <p className="text-[11px] text-zinc-500 mb-3">Supports .CSV, .TXT, .JSON, .TSV</p>
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-all shadow-sm">
+                  Choose File
                   <input
                     type="file"
                     accept=".csv,.tsv,.txt,.json,.tab,.dat,text/plain,application/json,text/csv"
@@ -860,59 +871,60 @@ function AdminPage() {
                 </label>
               </div>
 
-              {/* Raw Text Paste Box */}
+              {/* Paste Box */}
               <div className="flex flex-col">
-                <label className="text-xs font-semibold text-muted-foreground mb-1">Or Paste Document / Text Content Directly:</label>
+                <label className="text-xs font-semibold text-zinc-700 mb-1.5">Or Paste Document / Text Content:</label>
                 <textarea
                   rows={5}
                   placeholder="Team No, Project Title, Team Lead&#10;1, Smart IoT Meter, Alex Vance&#10;OR: 1 - Autonomous Drone - Priya Sharma&#10;OR JSON array"
                   value={csvText}
                   onChange={(e) => parseDocumentString(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-background p-3 text-xs font-mono outline-none focus:border-foreground/40 transition-colors resize-none h-full min-h-[140px]"
+                  className="w-full rounded-2xl border border-zinc-200 bg-[#f8f9fa] p-3.5 text-xs font-mono text-zinc-800 focus:bg-white focus:ring-2 focus:ring-zinc-900 outline-none transition-all resize-none h-full min-h-[150px]"
                 />
               </div>
             </div>
 
-            {/* CSV Parse Warning / Info */}
+            {/* Error Message */}
             {csvError && (
-              <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400 font-medium">
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-800 font-medium">
                 {csvError}
               </div>
             )}
 
-            {/* CSV Preview Table & Execution */}
+            {/* Preview & Import */}
             {csvParsed.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border/80 space-y-4">
+              <div className="mt-4 pt-4 border-t border-zinc-200/80 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Detected
+                  <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4 text-emerald-600" /> Ready to Import: {csvParsed.length} Projects Detected
                   </span>
 
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <label className="flex items-center gap-2 text-xs text-zinc-600 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={clearBeforeSeed}
                       onChange={(e) => setClearBeforeSeed(e.target.checked)}
-                      className="rounded border-border"
+                      className="rounded border-zinc-300"
                     />
-                    Clear un-voted dataset before import (Replace all)
+                    Clear un-voted dataset before import
                   </label>
                 </div>
 
-                {/* Preview snippet table */}
-                <div className="rounded-xl border border-border bg-background/80 overflow-hidden text-xs">
-                  <div className="bg-secondary/60 px-4 py-2 border-b border-border font-semibold flex justify-between text-muted-foreground text-[11px] uppercase tracking-wider">
+                <div className="rounded-2xl border border-zinc-200/80 bg-[#f8f9fa] overflow-hidden text-xs">
+                  <div className="bg-zinc-100 px-4 py-2 border-b border-zinc-200 font-semibold flex justify-between text-zinc-500 text-[11px] uppercase tracking-wider">
                     <span>Preview (First {Math.min(5, csvParsed.length)} of {csvParsed.length})</span>
                     <span>Team Lead</span>
                   </div>
-                  <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
+                  <div className="divide-y divide-zinc-200/60 max-h-48 overflow-y-auto">
                     {csvParsed.slice(0, 10).map((p, i) => (
                       <div key={i} className="px-4 py-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <span className="font-bold text-emerald-400">Team #{p.project_number}</span>
-                          <span className="font-semibold text-foreground truncate max-w-xs">{p.title}</span>
+                          <span className="font-bold text-zinc-900 bg-white border border-zinc-200 px-2 py-0.5 rounded-lg text-[11px]">
+                            Team #{p.project_number}
+                          </span>
+                          <span className="font-semibold text-zinc-800 truncate max-w-xs">{p.title}</span>
                         </div>
-                        <span className="text-muted-foreground text-[11px]">{p.team_name || "—"}</span>
+                        <span className="text-zinc-500 text-[11px]">{p.team_name || "—"}</span>
                       </div>
                     ))}
                   </div>
@@ -922,15 +934,15 @@ function AdminPage() {
                   type="button"
                   onClick={handleBulkSeedCsv}
                   disabled={seedingCsv}
-                  className="h-11 w-full rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                  className="h-12 w-full rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
                 >
                   {seedingCsv ? (
                     <>
-                      <RefreshCw className="h-4 w-4 animate-spin" /> Importing & Seeding Dataset to Database...
+                      <RefreshCw className="h-4 w-4 animate-spin text-white" /> Importing & Seeding Dataset...
                     </>
                   ) : (
                     <>
-                      <Upload className="h-4 w-4" /> 🚀 Bulk Seed {csvParsed.length} Projects to Database
+                      <Upload className="h-4 w-4" /> 🚀 Bulk Seed {csvParsed.length} Projects to PostgreSQL
                     </>
                   )}
                 </button>
@@ -938,10 +950,10 @@ function AdminPage() {
             )}
           </div>
 
-          {/* Add New Project Form */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="text-base font-bold mb-4 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-emerald-400" /> Add Single Project to Dataset
+          {/* Add Single Project Card */}
+          <div className="bg-white rounded-[28px] p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60">
+            <h2 className="text-base font-bold text-zinc-900 mb-4 flex items-center gap-2">
+              <Plus className="h-4 w-4 text-zinc-700" /> Add Single Project to Dataset
             </h2>
 
             <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -950,7 +962,7 @@ function AdminPage() {
                 placeholder="Team No. (e.g. 1)"
                 value={projNum}
                 onChange={(e) => setProjNum(e.target.value)}
-                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+                className="h-11 px-4 rounded-2xl border border-zinc-200 bg-[#f8f9fa] text-xs outline-none focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all text-zinc-900 font-semibold"
                 required
               />
               <input
@@ -958,7 +970,7 @@ function AdminPage() {
                 placeholder="Project Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+                className="h-11 px-4 rounded-2xl border border-zinc-200 bg-[#f8f9fa] text-xs outline-none focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all text-zinc-900"
                 required
               />
               <input
@@ -966,12 +978,12 @@ function AdminPage() {
                 placeholder="Team Lead Name (Optional)"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
-                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+                className="h-11 px-4 rounded-2xl border border-zinc-200 bg-[#f8f9fa] text-xs outline-none focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all text-zinc-900"
               />
               <button
                 type="submit"
                 disabled={adding}
-                className="sm:col-span-3 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/30 transition-colors disabled:opacity-50 mt-1 shadow-sm"
+                className="sm:col-span-3 h-11 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-all disabled:opacity-50 mt-1 shadow-sm"
               >
                 {adding ? "Adding Project..." : "+ Add Project to Dataset"}
               </button>
@@ -979,15 +991,18 @@ function AdminPage() {
           </div>
         </div>
 
-        {/* Right Panel Column: Live Expo Dataset List (col-span-5) */}
+        {/* Right Column: Active Expo Projects Table List (col-span-5) */}
         <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sticky top-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold">Active Expo Dataset ({projects.length} Projects)</h2>
+          <div className="bg-white rounded-[28px] p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 sticky top-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Live Inventory</span>
+                <h2 className="text-lg font-bold text-zinc-900">Expo Projects ({projects.length})</h2>
+              </div>
               <button
                 type="button"
                 onClick={fetchProjects}
-                className="p-2 rounded-xl border border-border bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs transition-colors"
                 title="Refresh list"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -995,15 +1010,15 @@ function AdminPage() {
             </div>
 
             {loading ? (
-              <div className="text-center text-xs text-muted-foreground py-12 animate-pulse">
-                Loading active project dataset...
+              <div className="text-center text-xs text-zinc-400 py-12 animate-pulse font-medium">
+                Loading active dataset...
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center text-xs text-muted-foreground py-12 border border-dashed border-border rounded-xl">
-                No projects in dataset. Use the Document Importer or Form to add projects.
+              <div className="text-center text-xs text-zinc-500 py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                No projects in dataset. Use the Importer or Form to add.
               </div>
             ) : (
-              <div className="flex flex-col gap-3 max-h-[700px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-3 max-h-[680px] overflow-y-auto pr-1">
                 {projects.map((p) => {
                   const isEditing = editingId === p.id;
                   if (isEditing) {
@@ -1014,7 +1029,7 @@ function AdminPage() {
                           e.preventDefault();
                           handleSaveEdit(p.id);
                         }}
-                        className="rounded-xl border border-border bg-background p-4 flex flex-col gap-2.5 text-xs"
+                        className="rounded-2xl border border-zinc-200 bg-[#f8f9fa] p-4 flex flex-col gap-2.5 text-xs"
                       >
                         <div className="grid grid-cols-1 gap-2">
                           <input
@@ -1022,7 +1037,7 @@ function AdminPage() {
                             placeholder="Team No."
                             value={editNum}
                             onChange={(e) => setEditNum(e.target.value)}
-                            className="h-9 px-2.5 rounded-lg border border-border bg-card font-semibold"
+                            className="h-9 px-3 rounded-xl border border-zinc-200 bg-white font-semibold"
                             required
                           />
                           <input
@@ -1030,7 +1045,7 @@ function AdminPage() {
                             placeholder="Project Title"
                             value={editTitle}
                             onChange={(e) => setEditTitle(e.target.value)}
-                            className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                            className="h-9 px-3 rounded-xl border border-zinc-200 bg-white"
                             required
                           />
                           <input
@@ -1038,22 +1053,22 @@ function AdminPage() {
                             placeholder="Team Lead Name"
                             value={editTeam}
                             onChange={(e) => setEditTeam(e.target.value)}
-                            className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                            className="h-9 px-3 rounded-xl border border-zinc-200 bg-white"
                           />
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 shrink-0 pt-1">
+                        <div className="flex items-center justify-end gap-2 pt-1">
                           <button
                             type="submit"
                             disabled={savingId === p.id}
-                            className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                            className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
                           >
                             {savingId === p.id ? "Saving..." : "Save"}
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingId(null)}
-                            className="px-3.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl bg-zinc-200 text-zinc-700 hover:bg-zinc-300 transition-colors"
                           >
                             Cancel
                           </button>
@@ -1065,15 +1080,15 @@ function AdminPage() {
                   return (
                     <div
                       key={p.id}
-                      className="rounded-xl border border-border bg-background p-3.5 flex items-center justify-between gap-3 text-xs hover:border-foreground/20 transition-colors"
+                      className="rounded-2xl border border-zinc-200/80 bg-[#f8f9fa] hover:bg-white p-3.5 flex items-center justify-between gap-3 text-xs transition-all hover:shadow-sm"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="flex h-9 px-2.5 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs text-foreground">
+                        <span className="flex h-9 px-3 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-white font-bold text-xs shadow-sm">
                           Team #{p.project_number}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="font-bold text-sm leading-snug truncate">{p.title}</div>
-                          {p.team_name && <div className="text-muted-foreground text-[11px] truncate">Team Lead: {p.team_name}</div>}
+                          <div className="font-bold text-sm leading-snug text-zinc-900 truncate">{p.title}</div>
+                          {p.team_name && <div className="text-zinc-500 text-[11px] truncate">Team Lead: {p.team_name}</div>}
                         </div>
                       </div>
 
@@ -1081,7 +1096,7 @@ function AdminPage() {
                         <button
                           type="button"
                           onClick={() => startEdit(p)}
-                          className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                          className="p-2 rounded-xl bg-white border border-zinc-200 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors shadow-sm"
                           title="Edit"
                         >
                           <Edit3 className="h-3.5 w-3.5" />
@@ -1089,7 +1104,7 @@ function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleDeleteProject(p.id, Number(p.project_number))}
-                          className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                          className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 transition-colors shadow-sm"
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
