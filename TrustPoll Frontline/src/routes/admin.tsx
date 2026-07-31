@@ -684,14 +684,14 @@ function AdminPage() {
 
   // ----- AUTHENTICATED ADMIN PANEL -----
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-8 max-w-4xl mx-auto font-sans">
+    <div className="min-h-screen bg-background text-foreground px-6 lg:px-12 py-8 max-w-7xl mx-auto font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6 mb-8">
         <div>
           <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
             <Shield className="h-4 w-4" /> ORGANIZER CONTROL PANEL
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">System Admin & Dataset Manager</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">System Admin & Dataset Manager</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -730,7 +730,7 @@ function AdminPage() {
         </div>
       )}
 
-      {/* Control Panels Grid */}
+      {/* Top Quick Actions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Reset Voting Data */}
         <div className="rounded-2xl border border-border bg-card p-5 flex flex-col justify-between shadow-sm">
@@ -808,292 +808,300 @@ function AdminPage() {
         </div>
       </div>
 
-      {/* Universal Document & Dataset Importer */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-card p-6 mb-8 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
-              <FileSpreadsheet className="h-4 w-4" /> Bulk Dataset Seeder
-            </div>
-            <h2 className="text-lg font-bold tracking-tight">Universal Document Dataset Importer</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Upload ANY document (.csv, .txt, .json, .tsv) or paste text content to seed your Expo projects directly into PostgreSQL.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={downloadCsvTemplate}
-              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
-            >
-              <Download className="h-3.5 w-3.5" /> CSV Template
-            </button>
-            <button
-              type="button"
-              onClick={downloadTxtTemplate}
-              className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
-            >
-              <Download className="h-3.5 w-3.5" /> TXT Template
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* File Upload Zone */}
-          <div className="rounded-xl border border-dashed border-border bg-background/50 p-4 flex flex-col items-center justify-center text-center">
-            <Upload className="h-6 w-6 text-emerald-400 mb-2" />
-            <p className="text-xs font-semibold mb-1">Upload Document File</p>
-            <p className="text-[11px] text-muted-foreground mb-3">Supports .CSV, .TXT, .JSON, .TSV documents</p>
-            <label className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all">
-              Choose Document File
-              <input
-                type="file"
-                accept=".csv,.tsv,.txt,.json,.tab,.dat,text/plain,application/json,text/csv"
-                onChange={handleDocumentFileUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          {/* Raw Text Paste Box */}
-          <div className="flex flex-col">
-            <label className="text-xs font-semibold text-muted-foreground mb-1">Or Paste Document / Text Content Directly:</label>
-            <textarea
-              rows={4}
-              placeholder="Team No, Project Title, Team Lead&#10;1, Smart IoT Meter, Alex Vance&#10;OR: 1 - Autonomous Drone - Priya Sharma&#10;OR JSON array"
-              value={csvText}
-              onChange={(e) => parseDocumentString(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background p-3 text-xs font-mono outline-none focus:border-foreground/40 transition-colors resize-none"
-            />
-          </div>
-        </div>
-
-        {/* CSV Parse Warning / Info */}
-        {csvError && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400 font-medium">
-            {csvError}
-          </div>
-        )}
-
-        {/* CSV Preview Table & Execution */}
-        {csvParsed.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border/80 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Detected
-              </span>
-
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={clearBeforeSeed}
-                  onChange={(e) => setClearBeforeSeed(e.target.checked)}
-                  className="rounded border-border"
-                />
-                Clear un-voted dataset before import (Replace all)
-              </label>
-            </div>
-
-            {/* Preview snippet table */}
-            <div className="rounded-xl border border-border bg-background/80 overflow-hidden text-xs">
-              <div className="bg-secondary/60 px-4 py-2 border-b border-border font-semibold flex justify-between text-muted-foreground text-[11px] uppercase tracking-wider">
-                <span>Preview (First {Math.min(5, csvParsed.length)} of {csvParsed.length})</span>
-                <span>Team Lead</span>
+      {/* Main Desktop Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Main Column: Importer & Add Form (col-span-7) */}
+        <div className="lg:col-span-7 space-y-8">
+          {/* Universal Document & Dataset Importer */}
+          <div className="rounded-2xl border border-emerald-500/30 bg-card p-6 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">
+                  <FileSpreadsheet className="h-4 w-4" /> Bulk Dataset Seeder
+                </div>
+                <h2 className="text-lg font-bold tracking-tight">Universal Document Dataset Importer</h2>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Upload ANY document (.csv, .txt, .json, .tsv) or paste text content to seed your Expo projects directly into PostgreSQL.
+                </p>
               </div>
-              <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
-                {csvParsed.slice(0, 10).map((p, i) => (
-                  <div key={i} className="px-4 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-bold text-emerald-400">Team #{p.project_number}</span>
-                      <span className="font-semibold text-foreground truncate max-w-xs">{p.title}</span>
-                    </div>
-                    <span className="text-muted-foreground text-[11px]">{p.team_name || "—"}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleBulkSeedCsv}
-              disabled={seedingCsv}
-              className="h-11 w-full rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
-            >
-              {seedingCsv ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Importing & Seeding Dataset to Database...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" /> 🚀 Bulk Seed {csvParsed.length} Projects to Database
-                </>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Add New Project Form */}
-      <div className="rounded-2xl border border-border bg-card p-6 mb-8 shadow-sm">
-        <h2 className="text-base font-bold mb-4 flex items-center gap-2">
-          <Plus className="h-4 w-4 text-emerald-400" /> Add New Project to Dataset
-        </h2>
-
-        <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input
-            type="number"
-            placeholder="Team No. (e.g. 1)"
-            value={projNum}
-            onChange={(e) => setProjNum(e.target.value)}
-            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Project Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Team Lead Name (Optional)"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={adding}
-            className="sm:col-span-3 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/30 transition-colors disabled:opacity-50 mt-1 shadow-sm"
-          >
-            {adding ? "Adding Project..." : "+ Add Project to Dataset"}
-          </button>
-        </form>
-      </div>
-
-      {/* Projects List */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold">Current Expo Dataset ({projects.length} Projects)</h2>
-          <button
-            type="button"
-            onClick={fetchProjects}
-            className="p-2 rounded-xl border border-border bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
-            title="Refresh list"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="text-center text-xs text-muted-foreground py-8 animate-pulse">
-            Loading active project dataset...
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border rounded-xl">
-            No projects in dataset. Use the form above to add projects or click Seed Default.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {projects.map((p) => {
-              const isEditing = editingId === p.id;
-              if (isEditing) {
-                return (
-                  <form
-                    key={p.id}
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSaveEdit(p.id);
-                    }}
-                    className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <input
-                        type="number"
-                        placeholder="Team No."
-                        value={editNum}
-                        onChange={(e) => setEditNum(e.target.value)}
-                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Project Title"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Team Lead Name"
-                        value={editTeam}
-                        onChange={(e) => setEditTeam(e.target.value)}
-                        className="h-9 px-2.5 rounded-lg border border-border bg-card"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="submit"
-                        disabled={savingId === p.id}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
-                      >
-                        {savingId === p.id ? "Saving..." : "Save"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className="px-3.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                );
-              }
-
-              return (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={downloadCsvTemplate}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-9 px-2.5 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs">
-                      Team #{p.project_number}
-                    </span>
-                    <div>
-                      <div className="font-bold text-sm">{p.title}</div>
-                      {p.team_name && <div className="text-muted-foreground text-[11px]">Team Lead: {p.team_name}</div>}
-                    </div>
-                  </div>
+                  <Download className="h-3.5 w-3.5" /> CSV Template
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadTxtTemplate}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-secondary text-foreground text-xs font-semibold hover:border-foreground/40 transition-colors flex items-center gap-1"
+                >
+                  <Download className="h-3.5 w-3.5" /> TXT Template
+                </button>
+              </div>
+            </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(p)}
-                      className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                      title="Edit"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteProject(p.id, Number(p.project_number))}
-                      className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {/* File Upload Zone */}
+              <div className="rounded-xl border border-dashed border-border bg-background/50 p-4 flex flex-col items-center justify-center text-center min-h-[140px]">
+                <Upload className="h-6 w-6 text-emerald-400 mb-2" />
+                <p className="text-xs font-semibold mb-1">Upload Document File</p>
+                <p className="text-[11px] text-muted-foreground mb-3">Supports .CSV, .TXT, .JSON, .TSV documents</p>
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition-all">
+                  Choose Document File
+                  <input
+                    type="file"
+                    accept=".csv,.tsv,.txt,.json,.tab,.dat,text/plain,application/json,text/csv"
+                    onChange={handleDocumentFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Raw Text Paste Box */}
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-muted-foreground mb-1">Or Paste Document / Text Content Directly:</label>
+                <textarea
+                  rows={5}
+                  placeholder="Team No, Project Title, Team Lead&#10;1, Smart IoT Meter, Alex Vance&#10;OR: 1 - Autonomous Drone - Priya Sharma&#10;OR JSON array"
+                  value={csvText}
+                  onChange={(e) => parseDocumentString(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-background p-3 text-xs font-mono outline-none focus:border-foreground/40 transition-colors resize-none h-full min-h-[140px]"
+                />
+              </div>
+            </div>
+
+            {/* CSV Parse Warning / Info */}
+            {csvError && (
+              <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-400 font-medium">
+                {csvError}
+              </div>
+            )}
+
+            {/* CSV Preview Table & Execution */}
+            {csvParsed.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border/80 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4" /> Ready to Import: {csvParsed.length} Projects Detected
+                  </span>
+
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={clearBeforeSeed}
+                      onChange={(e) => setClearBeforeSeed(e.target.checked)}
+                      className="rounded border-border"
+                    />
+                    Clear un-voted dataset before import (Replace all)
+                  </label>
+                </div>
+
+                {/* Preview snippet table */}
+                <div className="rounded-xl border border-border bg-background/80 overflow-hidden text-xs">
+                  <div className="bg-secondary/60 px-4 py-2 border-b border-border font-semibold flex justify-between text-muted-foreground text-[11px] uppercase tracking-wider">
+                    <span>Preview (First {Math.min(5, csvParsed.length)} of {csvParsed.length})</span>
+                    <span>Team Lead</span>
+                  </div>
+                  <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
+                    {csvParsed.slice(0, 10).map((p, i) => (
+                      <div key={i} className="px-4 py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-bold text-emerald-400">Team #{p.project_number}</span>
+                          <span className="font-semibold text-foreground truncate max-w-xs">{p.title}</span>
+                        </div>
+                        <span className="text-muted-foreground text-[11px]">{p.team_name || "—"}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })}
+
+                <button
+                  type="button"
+                  onClick={handleBulkSeedCsv}
+                  disabled={seedingCsv}
+                  className="h-11 w-full rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                >
+                  {seedingCsv ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" /> Importing & Seeding Dataset to Database...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" /> 🚀 Bulk Seed {csvParsed.length} Projects to Database
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Add New Project Form */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-base font-bold mb-4 flex items-center gap-2">
+              <Plus className="h-4 w-4 text-emerald-400" /> Add Single Project to Dataset
+            </h2>
+
+            <form onSubmit={handleAddProject} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                type="number"
+                placeholder="Team No. (e.g. 1)"
+                value={projNum}
+                onChange={(e) => setProjNum(e.target.value)}
+                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Project Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Team Lead Name (Optional)"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="h-11 px-3.5 rounded-xl border border-border bg-background text-xs outline-none focus:border-foreground/40 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={adding}
+                className="sm:col-span-3 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs hover:bg-emerald-500/30 transition-colors disabled:opacity-50 mt-1 shadow-sm"
+              >
+                {adding ? "Adding Project..." : "+ Add Project to Dataset"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Right Panel Column: Live Expo Dataset List (col-span-5) */}
+        <div className="lg:col-span-5">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sticky top-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold">Active Expo Dataset ({projects.length} Projects)</h2>
+              <button
+                type="button"
+                onClick={fetchProjects}
+                className="p-2 rounded-xl border border-border bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors"
+                title="Refresh list"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="text-center text-xs text-muted-foreground py-12 animate-pulse">
+                Loading active project dataset...
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-center text-xs text-muted-foreground py-12 border border-dashed border-border rounded-xl">
+                No projects in dataset. Use the Document Importer or Form to add projects.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 max-h-[700px] overflow-y-auto pr-1">
+                {projects.map((p) => {
+                  const isEditing = editingId === p.id;
+                  if (isEditing) {
+                    return (
+                      <form
+                        key={p.id}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSaveEdit(p.id);
+                        }}
+                        className="rounded-xl border border-border bg-background p-4 flex flex-col gap-2.5 text-xs"
+                      >
+                        <div className="grid grid-cols-1 gap-2">
+                          <input
+                            type="number"
+                            placeholder="Team No."
+                            value={editNum}
+                            onChange={(e) => setEditNum(e.target.value)}
+                            className="h-9 px-2.5 rounded-lg border border-border bg-card font-semibold"
+                            required
+                          />
+                          <input
+                            type="text"
+                            placeholder="Project Title"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                            required
+                          />
+                          <input
+                            type="text"
+                            placeholder="Team Lead Name"
+                            value={editTeam}
+                            onChange={(e) => setEditTeam(e.target.value)}
+                            className="h-9 px-2.5 rounded-lg border border-border bg-card"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 shrink-0 pt-1">
+                          <button
+                            type="submit"
+                            disabled={savingId === p.id}
+                            className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                          >
+                            {savingId === p.id ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="px-3.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="rounded-xl border border-border bg-background p-3.5 flex items-center justify-between gap-3 text-xs hover:border-foreground/20 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="flex h-9 px-2.5 shrink-0 items-center justify-center rounded-lg bg-secondary font-bold text-xs text-foreground">
+                          Team #{p.project_number}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-sm leading-snug truncate">{p.title}</div>
+                          {p.team_name && <div className="text-muted-foreground text-[11px] truncate">Team Lead: {p.team_name}</div>}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(p)}
+                          className="p-2 rounded-lg border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                          title="Edit"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProject(p.id, Number(p.project_number))}
+                          className="p-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
