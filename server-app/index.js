@@ -37,8 +37,25 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const recentResponseTimes = [];
+// In-memory array to track response times of the last 10 requests (excluding /health)
+const responseTimes = [];
 
+// Middleware to track response times
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    if (req.path !== "/health") {
+      const duration = Date.now() - start;
+      responseTimes.push(duration);
+      if (responseTimes.length > 10) {
+        responseTimes.shift();
+      }
+    }
+  });
+  next();
+});
+
+// POST /process-vote
 app.post("/process-vote", async (req, res) => {
   const start = Date.now();
   const { voter_id, project_id } = req.body;
@@ -68,13 +85,12 @@ app.post("/process-vote", async (req, res) => {
         }
 
         // 2. Create the Vote record
-        const duration = Date.now() - start;
         await tx.votes.create({
           data: {
             voter_id,
             project_id,
             handled_by_server: serverId,
-            response_time_ms: duration,
+            response_time_ms: Date.now() - start,
           },
         });
 
@@ -85,17 +101,12 @@ app.post("/process-vote", async (req, res) => {
         });
       },
       {
-        maxWait: 15000, // wait up to 15s to get a DB connection
-        timeout: 20000, // allow transaction up to 20s
+        maxWait: 15000,
+        timeout: 20000,
       }
     );
 
     const duration = Date.now() - start;
-    recentResponseTimes.push(duration);
-    if (recentResponseTimes.length > 10) {
-      recentResponseTimes.shift();
-    }
-
     return res.json({
       success: true,
       message: "Vote processed successfully.",
@@ -300,16 +311,16 @@ app.get("/", (req, res) => {
   return res.send(html);
 });
 
+// GET /health
 app.get("/health", (req, res) => {
-  let avg_response_time_ms = 0;
-  if (recentResponseTimes.length > 0) {
-    const sum = recentResponseTimes.reduce((a, b) => a + b, 0);
-    avg_response_time_ms = sum / recentResponseTimes.length;
-  }
+  const avgResponseTime =
+    responseTimes.length > 0
+      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+      : 0.0;
 
   return res.json({
     status: "healthy",
-    avg_response_time_ms: Number(avg_response_time_ms.toFixed(2)),
+    avg_response_time_ms: Number(avgResponseTime.toFixed(2)),
   });
 });
 
