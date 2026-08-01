@@ -23,6 +23,8 @@ import {
   KeyRound,
   Upload,
   FileSpreadsheet,
+  Search,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -48,7 +50,18 @@ function AdminPage() {
   // System State
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const filteredProjects = projects.filter((p) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      String(p.project_number).toLowerCase().includes(q) ||
+      p.title.toLowerCase().includes(q) ||
+      (p.team_name && p.team_name.toLowerCase().includes(q))
+    );
+  });
 
   // Add project form
   const [projNum, setProjNum] = useState("");
@@ -994,7 +1007,7 @@ function AdminPage() {
         {/* Right Column: Active Expo Projects Table List (col-span-5) */}
         <div className="lg:col-span-5">
           <div className="bg-white rounded-[28px] p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-zinc-200/60 sticky top-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Live Inventory</span>
                 <h2 className="text-lg font-bold text-zinc-900">Expo Projects ({projects.length})</h2>
@@ -1009,6 +1022,41 @@ function AdminPage() {
               </button>
             </div>
 
+            {/* Search Input Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search by team lead, title, or team #..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 w-full rounded-2xl border border-zinc-200 bg-[#f8f9fa] pl-10 pr-9 text-xs outline-none focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all text-zinc-900 placeholder:text-zinc-400 font-medium shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-2.5 p-0.5 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200 transition-all"
+                  title="Clear Search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {searchQuery && (
+              <div className="text-[11px] font-semibold text-zinc-500 mb-3 flex items-center justify-between px-1">
+                <span>Showing {filteredProjects.length} of {projects.length} teams</span>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="text-zinc-700 hover:underline font-bold text-[11px]"
+                >
+                  Reset filter
+                </button>
+              </div>
+            )}
+
             {loading ? (
               <div className="text-center text-xs text-zinc-400 py-12 animate-pulse font-medium">
                 Loading active dataset...
@@ -1017,9 +1065,21 @@ function AdminPage() {
               <div className="text-center text-xs text-zinc-500 py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                 No projects in dataset. Use the Importer or Form to add.
               </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="text-center text-xs text-zinc-500 py-10 border-2 border-dashed border-zinc-200 rounded-2xl p-4">
+                <p className="font-semibold text-zinc-700 mb-1">No matching projects found</p>
+                <p className="text-[11px] text-zinc-400 mb-3">No results for &ldquo;{searchQuery}&rdquo;</p>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-[11px] font-semibold hover:bg-zinc-800 transition-all shadow-sm"
+                >
+                  Clear Search
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col gap-3 max-h-[680px] overflow-y-auto pr-1">
-                {projects.map((p) => {
+                {filteredProjects.map((p) => {
                   const isEditing = editingId === p.id;
                   if (isEditing) {
                     return (
